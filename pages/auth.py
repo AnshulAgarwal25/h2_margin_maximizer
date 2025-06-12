@@ -25,6 +25,7 @@ def auth_page():
         if selected_role:
             st.session_state.selected_role = selected_role
 
+            ROLE_CONSTRAINTS = get_constraints()
             st.session_state.constraint_values[selected_role] = load_latest_constraints(
                 selected_role,
                 ROLE_CONSTRAINTS.get(selected_role, [])

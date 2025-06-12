@@ -1,13 +1,12 @@
-import datetime
-
 import streamlit as st
 
+from database import save_constraints
 from params import *
 from utils.audit_logging import log_audit_entry, load_audit_log
-from database import save_constraints
 
 
 def constraint_entry_page():
+    ROLE_CONSTRAINTS = get_constraints()
     """Page for entering and managing constraints."""
     role = st.session_state.selected_role
     st.title(f"Constraint Entry for {role}")

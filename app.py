@@ -13,7 +13,7 @@ from params import *
 
 # from utils.data_loader import load_data
 
-initialize_db(ROLES, ROLE_CONSTRAINTS, list(HYDROGEN_ALLOCATION_DATA.keys()))
+initialize_db(ROLES, get_constraints(), list(HYDROGEN_ALLOCATION_DATA.keys()))
 
 # --- Session State Initialization ---
 
