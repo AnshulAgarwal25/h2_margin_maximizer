@@ -1,0 +1,4 @@
+timestamp,user,role,parameter,old_value,new_value,comments
+2025-06-12 13:13:51,user123,Caustic Plant,Production Rate Min Min,0,1,
+2025-06-12 13:14:31,user123,Finance,Spending Limit Max,100,80,
+2025-06-12 13:32:55,user123,Marketing,Budget Min Max,100,101,
