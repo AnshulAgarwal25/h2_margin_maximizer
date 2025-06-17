@@ -13,7 +13,7 @@ def auth_page():
     # Simulate user ID for demonstration
     if not st.session_state.authenticated:
         st.session_state.username = st.text_input("Enter your User ID (e.g., 'user123')", value="user123")
-        if st.button("Simulate Login"):
+        if st.button("Login"):
             st.session_state.authenticated = True
             st.session_state.current_page = "role_selection"
             st.rerun()
@@ -24,12 +24,15 @@ def auth_page():
 
         if selected_role:
             st.session_state.selected_role = selected_role
-
-            ROLE_CONSTRAINTS = get_constraints()
-            st.session_state.constraint_values[selected_role] = load_latest_constraints(
-                selected_role,
-                ROLE_CONSTRAINTS.get(selected_role, [])
-            )
+            if selected_role == "Dashboard":  # New condition for Dashboard role
+                st.session_state.current_page = "dashboard"
+            else:
+                # Load the latest constraints for the newly selected role (only if not Dashboard)
+                ROLE_CONSTRAINTS = get_constraints()
+                st.session_state.constraint_values[selected_role] = load_latest_constraints(
+                    selected_role,
+                    ROLE_CONSTRAINTS.get(selected_role, [])
+                )
             st.session_state.current_page = "constraint_entry"
             st.rerun()
         else:

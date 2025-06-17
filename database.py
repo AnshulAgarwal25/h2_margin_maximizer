@@ -1,4 +1,5 @@
 import datetime
+import json
 import sqlite3
 
 # --- Database Configuration ---
@@ -15,10 +16,11 @@ def get_db_connection():
 
 # --- Table Creation Functions ---
 
-def create_constraint_table(role_name, constraints):
+def create_constraint_table(role_name, constraints_schema):
     """
     Creates a dedicated table for a given role's constraints.
-    Columns will be `timestamp` and each constraint name.
+    Columns will be `timestamp` and columns derived from constraint_schema type.
+    constraints_schema: List of dicts, e.g., [{"name": "Budget", "type": "range"}, {"name": "Limit", "type": "single"}]
     """
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -26,10 +28,23 @@ def create_constraint_table(role_name, constraints):
     # Sanitize role name for table name (replace spaces and special chars)
     table_name = f"constraints_{role_name.replace(' ', '_').replace('-', '_').replace('.', '_').lower()}"
 
-    # Build columns definition from constraint names
-    # Using REAL for min/max values
-    columns_sql = ", ".join(
-        [f'"{c_name.replace(" ", "_")}_min" REAL, "{c_name.replace(" ", "_")}_max" REAL' for c_name in constraints])
+    columns_sql_parts = []
+    for constraint in constraints_schema:
+        c_name_clean = constraint["name"].replace(" ", "_").replace("-", "_")
+        c_type = constraint["type"]
+        if c_type == "range":
+            columns_sql_parts.append(f'"{c_name_clean}_min" REAL')
+            columns_sql_parts.append(f'"{c_name_clean}_max" REAL')
+        elif c_type == "single":
+            columns_sql_parts.append(f'"{c_name_clean}" REAL')  # Single value constraint
+        # Add other types if needed in the future
+
+    columns_sql = ", ".join(columns_sql_parts)
+
+    if not columns_sql:
+        print(f"Skipping table creation for '{table_name}' as no constraints are defined.")
+        conn.close()
+        return table_name  # Return early if no columns
 
     create_table_sql = f"""
     CREATE TABLE IF NOT EXISTS {table_name} (
@@ -38,6 +53,8 @@ def create_constraint_table(role_name, constraints):
     );
     """
     try:
+        if table_name == 'constraints_dashboard':
+            return 0
         cursor.execute(create_table_sql)
         conn.commit()
         print(f"Table '{table_name}' ensured to exist.")
@@ -86,42 +103,80 @@ def create_allocation_table(allocation_areas):
     return table_name
 
 
+def create_optimizer_state_table():
+    """
+    Creates a table to store the last run constraints snapshot for the optimizer.
+    This table will have a single row, updated periodically.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    table_name = "optimizer_state"
+    create_table_sql = f"""
+    CREATE TABLE IF NOT EXISTS {table_name} (
+        id INTEGER PRIMARY KEY DEFAULT 1, -- Use a default ID for a single row
+        last_run_constraints_json TEXT,
+        last_updated TEXT
+    );
+    """
+    try:
+        cursor.execute(create_table_sql)
+        conn.commit()
+        print(f"Table '{table_name}' ensured to exist.")
+        # Ensure there's always at least one row for updates
+        cursor.execute(
+            f"INSERT OR IGNORE INTO {table_name} (id, last_run_constraints_json, last_updated) VALUES (1, ?, ?);",
+            (json.dumps({}), datetime.datetime.now().isoformat()))
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"Error creating table {table_name}: {e}")
+    finally:
+        conn.close()
+
+
 # --- Data Loading Functions ---
 
 def load_latest_constraints(role_name, constraints_schema):
     """
     Loads the latest constraint entry for a given role.
-    Returns a dictionary of current min/max values.
+    Returns a dictionary of current values, respecting single/range types.
     """
     conn = get_db_connection()
     cursor = conn.cursor()
     table_name = f"constraints_{role_name.replace(' ', '_').replace('-', '_').replace('.', '_').lower()}"
 
-    # Check if table exists (optional, as create_constraint_table handles it)
+    # Check if table exists
     cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}';")
     if cursor.fetchone() is None:
         conn.close()
-        return {c: {"min": 0, "max": 100} for c in constraints_schema}  # Return default if table doesn't exist
+        return {c["name"]: ({"min": 0, "max": 100} if c["type"] == "range" else 0) for c in constraints_schema}
 
     try:
         cursor.execute(f"SELECT * FROM {table_name} ORDER BY timestamp DESC LIMIT 1;")
         row = cursor.fetchone()
         if row:
             latest_constraints = {}
-            for c_name in constraints_schema:
-                col_name_min = f'"{c_name.replace(" ", "_")}_min"'
-                col_name_max = f'"{c_name.replace(" ", "_")}_max"'
-                latest_constraints[c_name] = {
-                    "min": row[col_name_min.strip('"')] if col_name_min.strip('"') in row.keys() else 0,
-                    # Access by key name after row_factory
-                    "max": row[col_name_max.strip('"')] if col_name_max.strip('"') in row.keys() else 100
-                }
+            for constraint in constraints_schema:
+                c_name = constraint["name"]
+                c_name_clean = c_name.replace(" ", "_").replace("-", "_")
+                c_type = constraint["type"]
+
+                if c_type == "range":
+                    col_name_min = f'"{c_name_clean}_min"'
+                    col_name_max = f'"{c_name_clean}_max"'
+                    latest_constraints[c_name] = {
+                        "min": row[col_name_min.strip('"')] if col_name_min.strip('"') in row.keys() else 0,
+                        "max": row[col_name_max.strip('"')] if col_name_max.strip('"') in row.keys() else 100
+                    }
+                elif c_type == "single":
+                    col_name = f'"{c_name_clean}"'
+                    latest_constraints[c_name] = row[col_name.strip('"')] if col_name.strip('"') in row.keys() else 0
             return latest_constraints
         else:
-            return {c: {"min": 0, "max": 100} for c in constraints_schema}  # Return default if no data
+            # No data found, return default values based on schema
+            return {c["name"]: ({"min": 0, "max": 100} if c["type"] == "range" else 0) for c in constraints_schema}
     except sqlite3.Error as e:
         print(f"Error loading latest constraints for {role_name}: {e}")
-        return {c: {"min": 0, "max": 100} for c in constraints_schema}  # Return default on error
+        return {c["name"]: ({"min": 0, "max": 100} if c["type"] == "range" else 0) for c in constraints_schema}
     finally:
         conn.close()
 
@@ -163,32 +218,68 @@ def load_latest_allocation_data(allocation_data_schema):
         conn.close()
 
 
+def load_optimizer_last_run_constraints():
+    """
+    Loads the last run constraints snapshot from the optimizer_state table.
+    Returns an empty dictionary if no data is found.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    table_name = "optimizer_state"
+    try:
+        cursor.execute(f"SELECT last_run_constraints_json FROM {table_name} WHERE id = 1;")
+        result = cursor.fetchone()
+        if result and result['last_run_constraints_json']:
+            return json.loads(result['last_run_constraints_json'])
+        else:
+            return {}  # Return empty dict if no data or JSON is empty
+    except sqlite3.Error as e:
+        print(f"Error loading optimizer state: {e}")
+        return {}  # Return empty dict on error
+    finally:
+        conn.close()
+
+
 # --- Data Writing Functions ---
 
-def save_constraints(role_name, constraint_values):
+def save_constraints(role_name, current_constraint_values, constraints_schema):
     """
-    Saves a new timestamped entry of constraint values for a given role.
+    Saves a new timestamped entry of constraint values for a given role,
+    handling single vs. range types.
     """
     conn = get_db_connection()
     cursor = conn.cursor()
     table_name = f"constraints_{role_name.replace(' ', '_').replace('-', '_').replace('.', '_').lower()}"
 
-    timestamp_key = datetime.datetime.now().replace(second=0, microsecond=0).isoformat()
+    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}';")
+    if cursor.fetchone() is None:
+        print(f"Table '{table_name}' does not exist. Skipping constraint save.")
+        conn.close()
+        return  # Exit if table does not exist
 
-    # Dynamically build column names and values for the insert statement
+    timestamp_key = datetime.datetime.now().isoformat(timespec='milliseconds')
+
     columns = ["timestamp"]
     values = [timestamp_key]
     placeholders = ["?"]
 
-    for c_name, data in constraint_values.items():
-        col_name_min = f'"{c_name.replace(" ", "_")}_min"'
-        col_name_max = f'"{c_name.replace(" ", "_")}_max"'
-        columns.append(col_name_min)
-        columns.append(col_name_max)
-        values.append(data.get("min", 0))
-        values.append(data.get("max", 100))
-        placeholders.append("?")
-        placeholders.append("?")
+    for constraint in constraints_schema:
+        c_name = constraint["name"]
+        c_name_clean = c_name.replace(" ", "_").replace("-", "_")
+        c_type = constraint["type"]
+
+        if c_type == "range":
+            # Expecting current_constraint_values[c_name] to be a dict like {"min": X, "max": Y}
+            columns.append(f'"{c_name_clean}_min"')
+            columns.append(f'"{c_name_clean}_max"')
+            values.append(current_constraint_values.get(c_name, {}).get("min", 0))
+            values.append(current_constraint_values.get(c_name, {}).get("max", 100))
+            placeholders.extend(["?", "?"])
+        elif c_type == "single":
+            # Expecting current_constraint_values[c_name] to be a single value
+            columns.append(f'"{c_name_clean}"')
+            values.append(current_constraint_values.get(c_name, 0))
+            placeholders.append("?")
 
     columns_sql = ", ".join(columns)
     placeholders_sql = ", ".join(placeholders)
@@ -213,7 +304,7 @@ def save_allocation_data(allocation_data):
     cursor = conn.cursor()
     table_name = "allocations"
 
-    timestamp_key = datetime.datetime.now().replace(second=0, microsecond=0).isoformat()
+    timestamp_key = datetime.datetime.now().isoformat(timespec='milliseconds')
 
     columns = ["timestamp"]
     values = [timestamp_key]
@@ -239,35 +330,36 @@ def save_allocation_data(allocation_data):
     insert_sql = f"INSERT INTO {table_name} ({columns_sql}) VALUES ({placeholders_sql});"
 
     try:
-        # Check if an entry for the current minute already exists to avoid PK violation
-        cursor.execute(f"SELECT timestamp FROM {table_name} WHERE timestamp = ?;", (timestamp_key,))
-        if cursor.fetchone():
-            # If exists, update instead of insert (or handle as per requirement)
-            print(f"Entry for {timestamp_key} already exists in allocations. Updating.")
-            # For simplicity, if we hit this, it means a rapid change. We'll overwrite or skip.
-            # A more robust system might update individual fields.
-            # For now, let's just insert a new one by appending a microsecond or similar,
-            # or allow multiple entries per minute if that's desired behavior.
-            # For this exercise, we will just insert, allowing multiple entries per minute
-            # if multiple updates occur very quickly within the same minute.
-            # To strictly ensure unique key per minute, we'd need an UPDATE ON CONFLICT syntax.
-            # SQLite doesn't have a direct UPSERT for this, but INSERT OR REPLACE could work.
-            # However, INSERT OR REPLACE would replace the entire row, which might lose data
-            # if we are tracking incremental changes.
-            # For this case, we'll just insert as the PK is timestamp rounded to minute.
-            # If multiple changes within a minute, they'll all be distinct entries for different seconds within that minute.
-            # Let's adjust timestamp_key slightly to ensure uniqueness for rapid changes.
-            timestamp_key = datetime.datetime.now().isoformat(timespec='seconds')  # Use seconds for better granularity
-            columns[0] = "timestamp"  # Ensure timestamp column is still first
-            values[0] = timestamp_key
-            insert_sql = f"INSERT INTO {table_name} ({columns_sql}) VALUES ({placeholders_sql});"  # Rebuild with new timestamp
-            cursor.execute(insert_sql, values)
-        else:
-            cursor.execute(insert_sql, values)
+        cursor.execute(insert_sql, values)
         conn.commit()
         print(f"Allocation data saved successfully at {timestamp_key}.")
     except sqlite3.Error as e:
         print(f"Error saving allocation data: {e}")
+    finally:
+        conn.close()
+
+
+def save_optimizer_last_run_constraints(constraints_snapshot):
+    """
+    Saves the current constraints snapshot to the optimizer_state table.
+    This will update the single row in this table.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    table_name = "optimizer_state"
+    constraints_json = json.dumps(constraints_snapshot)
+    last_updated = datetime.datetime.now().isoformat()
+
+    update_sql = f"""
+    INSERT OR REPLACE INTO {table_name} (id, last_run_constraints_json, last_updated)
+    VALUES (1, ?, ?);
+    """
+    try:
+        cursor.execute(update_sql, (constraints_json, last_updated))
+        conn.commit()
+        print(f"Optimizer state (last_run_constraints) saved successfully at {last_updated}.")
+    except sqlite3.Error as e:
+        print(f"Error saving optimizer state: {e}")
     finally:
         conn.close()
 
@@ -279,44 +371,9 @@ def initialize_db(roles, role_constraints_map, allocation_areas):
     """
     # Create constraint tables for each role
     for role in roles:
-        create_constraint_table(role, role_constraints_map.get(role, []))
+        constraints_schema = role_constraints_map.get(role, [])
+        if constraints_schema:  # Only attempt to create if constraints are defined
+            create_constraint_table(role, constraints_schema)
     # Create the common allocation table
     create_allocation_table(allocation_areas)
-
-# --- Main execution for testing purposes (optional) ---
-# if __name__ == "__main__":
-#     # Dummy data for testing initialization
-#     test_roles = ["Marketing", "H2 Plant"]
-#     test_role_constraints = {
-#         "Marketing": ["Budget Min", "Budget Max"],
-#         "H2 Plant": ["H2 Purity Min", "H2 Pressure Max"]
-#     }
-#     test_allocation_areas = list({
-#                                      "Pipeline": {}, "Bank": {}, "HCL": {}, "Flaker - 1": {}
-#                                  }.keys())  # Use keys to get a list of areas
-#
-#     initialize_db(test_roles, test_role_constraints, test_allocation_areas)
-#
-#     # Example: Save some dummy constraints
-#     dummy_marketing_constraints = {
-#         "Budget Min": {"min": 1000, "max": 5000},
-#         "Budget Max": {"min": 10000, "max": 50000}
-#     }
-#     save_constraints("Marketing", dummy_marketing_constraints)
-#
-#     # Example: Load latest constraints
-#     latest_marketing_constraints = load_latest_constraints("Marketing", test_role_constraints["Marketing"])
-#     print("\nLatest Marketing Constraints:", latest_marketing_constraints)
-#
-#     # Example: Save dummy allocation data
-#     dummy_allocation_data = {
-#         "Pipeline": {"allocated": 1500, "recommended": 1450, "status": "accepted", "comment": "Good"},
-#         "Bank": {"allocated": 800, "recommended": 850, "status": "pending", "comment": ""},
-#         "HCL": {"allocated": 300, "recommended": 320, "status": "rejected", "comment": "Too high"},
-#         "Flaker - 1": {"allocated": 200, "recommended": 190, "status": "accepted", "comment": "Optimum"}
-#     }
-#     save_allocation_data(dummy_allocation_data)
-#
-#     # Example: Load latest allocation data
-#     latest_allocation_data = load_latest_allocation_data(dummy_allocation_data)
-#     print("\nLatest Allocation Data:", latest_allocation_data)
+    create_optimizer_state_table()

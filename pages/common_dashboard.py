@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 
 from database import save_allocation_data
+from optimizer.run_optimizer import trigger_optimizer_if_needed
 
 
 def common_dashboard_page():
@@ -35,15 +36,10 @@ def common_dashboard_page():
             st.metric(label="Recommended", value=data["recommended"])
         with col_action:
             current_status = data["status"]
-            if current_status == "accepted":
-                st.success("Accepted")
-                status_radio = st.radio(f"Action for {area}", ["Accept", "Reject"], index=0, key=f"action_{area}")
-            elif current_status == "rejected":
-                st.error("Rejected")
-                status_radio = st.radio(f"Action for {area}", ["Accept", "Reject"], index=1, key=f"action_{area}")
-            else:
-                status_radio = st.radio(f"Action for {area}", ["Accept", "Reject"], index=0,
-                                        key=f"action_{area}")  # Default to Accept
+            status_radio = st.radio(f"Action for {area}", ["Accept", "Reject"],
+                                    index=0 if current_status == "accepted" else (
+                                        1 if current_status == "rejected" else 0),
+                                    key=f"action_{area}")
 
             new_status = ""
             if status_radio == "Accept":
@@ -56,7 +52,6 @@ def common_dashboard_page():
             if new_status != current_status:
                 st.session_state.dashboard_data[area]["status"] = new_status
                 save_allocation_data(st.session_state.dashboard_data)
-                # No audit log for status change as it's operator action, not constraint change
                 st.success(f"Status for {area} changed to {new_status}!")
                 st.rerun()
 
@@ -66,11 +61,19 @@ def common_dashboard_page():
             if new_comment != current_comment:
                 st.session_state.dashboard_data[area]["comment"] = new_comment
                 save_allocation_data(st.session_state.dashboard_data)
-                # No audit log for comment change as it's operator action, not constraint change
                 st.success(f"Comment for {area} updated!")
                 st.rerun()
 
     st.markdown("---")
-    st.button("Go to Constraint Entry", on_click=lambda: st.session_state.update(current_page="constraint_entry"))
+    if st.session_state.selected_role != "Dashboard":
+        st.button("Go to Constraint Entry", on_click=lambda: st.session_state.update(current_page="constraint_entry"))
+
+    if st.button("Run Optimizer"):
+        st.session_state.run_optimizer_button_clicked = True
+        trigger_optimizer_if_needed(manual_trigger=True)
+
     st.button("Change Role",
               on_click=lambda: st.session_state.update(current_page="role_selection", selected_role=None))
+
+    # if st.button("Test Optimizer"):
+    #     generate_hydrogen_recommendations()

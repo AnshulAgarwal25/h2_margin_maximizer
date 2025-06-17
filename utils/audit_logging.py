@@ -1,6 +1,5 @@
 import datetime
 import pandas as pd
-
 from params import *
 
 AUDIT_LOG_PATH = os.path.join(DATA_DIR, "audit_log.csv")

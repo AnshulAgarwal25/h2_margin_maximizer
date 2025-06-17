@@ -1,5 +1,8 @@
 timestamp,user,role,parameter,old_value,new_value,comments
-2025-06-12 15:25:46,Anshul,Marketing,Demand - H2O2 (TPH) Min,0,75,
-2025-06-12 15:25:46,Anshul,Marketing,Demand - H2O2 (TPH) Max,100,95,
-2025-06-12 15:25:46,Anshul,Marketing,Demand - Flaker (TPH) Min,0,400,
-2025-06-12 15:25:46,Anshul,Marketing,Demand - Flaker (TPH) Max,100,400,
+2025-06-17 12:13:47,user123,H2 Plant,Pipeline Compressor Capacity (NM3/hr) Max,12000.0,7000.0,
+2025-06-17 12:17:39,user123,H2 Plant,Pipeline Compressor Capacity (NM3/hr) Max,7000.0,12000.0,
+2025-06-17 12:50:21,user123,H2 Plant,Pipeline Compressor Capacity (NM3/hr) Max,12000.0,7000.0,
+2025-06-17 12:53:14,user123,H2 Plant,Pipeline Compressor Capacity (NM3/hr) Max,7000.0,8000.0,
+2025-06-17 12:57:58,user123,H2 Plant,Pipeline Compressor Capacity (NM3/hr) Max,8000.0,12000.0,
+2025-06-17 13:00:29,user123,Caustic Plant,H2 required (NM3) per ton of HCl,375.0,360.0,
+2025-06-17 13:07:15,user123,Caustic Plant,H2 required (NM3) per ton of HCl,360.0,375.0,
