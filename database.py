@@ -2,6 +2,8 @@ import datetime
 import json
 import sqlite3
 
+import pandas as pd
+
 # --- Database Configuration ---
 DB_FILE = 'hydrogen_allocation_tool.db'  # SQLite database file
 
@@ -134,6 +136,37 @@ def create_optimizer_state_table():
 
 
 # --- Data Loading Functions ---
+
+def load_all_allocations():
+    """
+    Loads all entries from the 'allocations' table into a Pandas DataFrame.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing all allocation records,
+                      or an empty DataFrame if the table doesn't exist or is empty.
+    """
+    conn = None
+    try:
+        conn = get_db_connection()
+
+        # Check if the allocations table exists
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='allocations';")
+        if cursor.fetchone() is None:
+            print("Table 'allocations' does not exist. Returning empty DataFrame.")
+            return pd.DataFrame()  # Return empty DataFrame if table doesn't exist
+
+        # Load all data from the allocations table
+        df = pd.read_sql_query("SELECT * FROM allocations ORDER BY timestamp ASC;", conn)
+        print("Successfully loaded all allocations data.")
+        return df
+    except sqlite3.Error as e:
+        print(f"Error loading all allocations data: {e}")
+        return pd.DataFrame()  # Return empty DataFrame on error
+    finally:
+        if conn:
+            conn.close()
+
 
 def load_latest_constraints(role_name, constraints_schema):
     """

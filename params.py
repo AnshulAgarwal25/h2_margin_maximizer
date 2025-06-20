@@ -47,7 +47,7 @@ entry_constraints_dummy = {
     'Caustic Plant': {'Duration of pipeline demand change (hrs)': 0,
                       'Total Caustic Production (TPH)': {'min': 0, 'max': 92.7},
                       'H2 generated (NM3) per ton of caustic': 280,
-                      'Total HCl Production (TPH)': {'min': 0, 'max': 18.75}, 'H2 required (NM3) per ton of HCl': 375},
+                      'Total HCl Production (TPH)': {'min': 0, 'max': 18.75}, 'H2 required (NM3) per ton of HCl': 365},
 
     'H2 Plant': {'Pipeline Compressor Capacity (NM3/hr)': {'min': 0, 'max': 12000},
                  'Bank Compressor Capacity (NM3/hr)': {'min': 0, 'max': 8000},

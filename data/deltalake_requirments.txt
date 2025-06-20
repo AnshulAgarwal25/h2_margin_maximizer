@@ -1,0 +1,66 @@
+
+# ==================== List of tables Available in Delta Lake ============================
+DCS_Tag1_st
+DCS_Tag2_st
+
+
+# ========================= requirements ===================
+deltalake
+adlfs
+fsspec 
+pandas
+pyarrow
+
+# ========================================================= Azure ADLS Config to access delta tables=======================================
+from deltalake import DeltaTable
+import os
+
+# Set your Azure storage credentials
+storage_account_key = "yeXQN4nWt83jX42gGoXTA4QVBhJnoDFHfaqD1SOk4b7n0zpK4U3yGk2waUVzH63avnW6aZwhWqli+AStEFIcvg==" #"<your-storage-key>"  # Or use SAS token
+storage_account_name = "chemstoragednaproj001"  #"<your-storage-account>"
+container_name = "dna-catalog-prd" 
+
+# Set credentials via environment variables for adlfs to work with DeltaTable
+os.environ["AZURE_STORAGE_ACCOUNT_NAME"] = storage_account_name
+os.environ["AZURE_STORAGE_ACCOUNT_KEY"] = storage_account_key
+
+storage_options={"account_name": storage_account_name,
+                "account_key": storage_account_key,
+                }
+
+table_name = "DCS_Tags_st"
+
+# Format the ADLS Gen2 URL
+delta_table_path = f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/Margin_Maximizer_db/external/{table_name}"
+
+# ============================= Read delta tables======================================
+# Read the Delta table
+dt = DeltaTable(delta_table_path, storage_options=storage_options )
+
+# Convert to pandas DataFrame
+pdf = dt.to_pandas().sort_values("TimeStamp", ascending=False)
+print(pdf)
+
+# ============================ Write to delta tables =====================================
+
+# Sample data matching your schema
+data = {
+    "timestamp": ["2025-06-19 10:00:00", "2025-06-19 10:05:00"],
+    "Piepline": [123.45, 678.90],
+    "Bank": [234.56, 789.01],
+    "H2O2": [345.67, 890.12],
+    "Flaker": [456.78, 901.23],
+    "Boiler": [567.89, 12.34],
+    "HCl": [678.90, 23.45],
+    "Vent": [789.01, 34.56]
+}
+df = pd.DataFrame(data)
+
+# Write data to Delta table (append mode)
+write_deltalake(
+    delta_table_path,
+    df,
+    mode="append",
+    storage_options=storage_options
+)
+

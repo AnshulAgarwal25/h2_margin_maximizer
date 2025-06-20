@@ -6,3 +6,4 @@ timestamp,user,role,parameter,old_value,new_value,comments
 2025-06-17 12:57:58,user123,H2 Plant,Pipeline Compressor Capacity (NM3/hr) Max,8000.0,12000.0,
 2025-06-17 13:00:29,user123,Caustic Plant,H2 required (NM3) per ton of HCl,375.0,360.0,
 2025-06-17 13:07:15,user123,Caustic Plant,H2 required (NM3) per ton of HCl,360.0,375.0,
+2025-06-17 15:50:58,user123,Marketing,Demand - H2O2 (TPH) Max,3.34,4.0,

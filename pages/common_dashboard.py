@@ -3,6 +3,7 @@ import streamlit as st
 
 from database import save_allocation_data
 from optimizer.run_optimizer import trigger_optimizer_if_needed
+from utils.downloader import downloader
 
 
 def common_dashboard_page():
@@ -75,5 +76,4 @@ def common_dashboard_page():
     st.button("Change Role",
               on_click=lambda: st.session_state.update(current_page="role_selection", selected_role=None))
 
-    # if st.button("Test Optimizer"):
-    #     generate_hydrogen_recommendations()
+    downloader()

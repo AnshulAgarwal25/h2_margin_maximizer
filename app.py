@@ -1,25 +1,24 @@
 # app.py
-
 import streamlit as st
-
 from database import (
     initialize_db,
     load_latest_allocation_data,
     load_latest_constraints
 )
-from optimizer.run_optimizer import trigger_optimizer_if_needed, last_run_constraints_trigger_run
+from optimizer.run_optimizer import trigger_optimizer_if_needed, last_run_constraints_trigger_run, initial_db_trigger
 from pages.auth import auth_page
 from pages.common_dashboard import common_dashboard_page
 from pages.constraint_entry import constraint_entry_page
 from params import *
 
-st.set_page_config(layout="centered", page_title="Hydrogen Allocation Tool",
+st.set_page_config(layout="wide", page_title="Hydrogen Allocation Tool",
                    initial_sidebar_state="collapsed", page_icon="📈")
 
 initialize_db(ROLES, get_constraints(), list(HYDROGEN_ALLOCATION_DATA.keys()))
 
 # --- Session State Initialization ---
-
+if "initial_db_setup_done" not in st.session_state:
+    initial_db_trigger()
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "username" not in st.session_state:

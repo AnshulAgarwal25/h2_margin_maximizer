@@ -4,3 +4,9 @@ streamlit==1.45.0
 jupyter==1.1.1
 openpyxl==3.1.5
 pyomo==6.9.2
+XlsxWriter==3.2.5
+streamlit-autorefresh==1.0.1
+
+# data pipelines
+deltalake==1.0.2
+adlfs==2024.12.0
