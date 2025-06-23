@@ -12,6 +12,8 @@ def common_dashboard_page():
     st.write(f"Logged in as: **{st.session_state.username}** (Role: **{st.session_state.selected_role}**)")
 
     st.write("### Current Hydrogen Allocations:")
+    # with st.spinner("Optimizer Running..."):
+    #     trigger_optimizer_if_needed()
 
     # Convert dashboard data to a DataFrame for easy display
     df = pd.DataFrame([
@@ -42,7 +44,7 @@ def common_dashboard_page():
                                         1 if current_status == "rejected" else 0),
                                     key=f"action_{area}")
 
-            new_status = ""
+            # new_status = ""
             if status_radio == "Accept":
                 new_status = "accepted"
             elif status_radio == "Reject":
@@ -54,7 +56,7 @@ def common_dashboard_page():
                 st.session_state.dashboard_data[area]["status"] = new_status
                 save_allocation_data(st.session_state.dashboard_data)
                 st.success(f"Status for {area} changed to {new_status}!")
-                st.rerun()
+                # st.rerun()
 
         with col_comment:
             current_comment = data["comment"]

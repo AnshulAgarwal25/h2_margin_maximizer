@@ -1,0 +1,4 @@
+timestamp,user,role,parameter,old_value,new_value,comments
+2025-06-23 10:51:41,user123,Finance,H2O2,6.0,6.19,
+2025-06-23 10:51:41,user123,Finance,Flaker,19.0,19.68,
+2025-06-23 10:51:41,user123,Finance,Boiler,4.0,3.86,

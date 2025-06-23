@@ -70,7 +70,7 @@ def trigger_optimizer_if_needed(manual_trigger=False):
         save_optimizer_last_run_constraints(st.session_state.last_run_constraints)
         st.success("Optimizer run completed! Dashboard updated.")
         save_allocation_data(st.session_state.dashboard_data)
-        st.rerun()
+        # st.rerun()
     else:
         # print("Optimizer conditions not met. Not running.") # For debugging
         pass  # Optimizer not triggered
@@ -196,43 +196,12 @@ def generate_hydrogen_recommendations(dcs_constraints):
             allocation_details[area]["comment"] = "Optimizer failed to provide new recommendations."
 
     current_recommendations = copy.deepcopy(allocation_details)
+
     return current_recommendations
 
 
 def last_run_constraints_trigger_run():
     st.session_state.last_run_constraints = load_optimizer_last_run_constraints()
-
-    # --- MODIFIED: Force optimizer run on very first start if no previous optimizer state ---
-    # This ensures that if the database's optimizer_state table is empty (truly first app run),
-    # we run the optimizer once to establish initial recommendations and a baseline.
-    # if not st.session_state.last_run_constraints:  # Checks if the loaded dict is empty
-    #     st.info("No previous optimizer state found. Initializing constraints and running optimizer for setup...")
-    #     ROLE_CONSTRAINTS = get_constraints()
-    #     # Insert predefined initial constraints into the database for each role
-    #     for role_name, constraints_data in entry_constraints_dummy.items():
-    #         save_constraints(role_name, constraints_data, ROLE_CONSTRAINTS[role_name])
-    #
-    #     for role_name in ROLES:
-    #         if role_name in ROLE_CONSTRAINTS:
-    #             st.session_state.constraint_values[role_name] = load_latest_constraints(role_name,
-    #                                                                                     ROLE_CONSTRAINTS[role_name])
-    #
-    #     new_recommendations = generate_hydrogen_recommendations()
-    #     st.session_state.dashboard_data = new_recommendations
-    #
-    #     # Set last_run_constraints to these initial values for the baseline comparison
-    #     initial_baseline_constraints = {}
-    #     for role_name in ROLES:
-    #         if role_name in ROLE_CONSTRAINTS and role_name in st.session_state.constraint_values:
-    #             initial_baseline_constraints[role_name] = copy.deepcopy(st.session_state.constraint_values[role_name])
-    #     st.session_state.last_run_constraints = initial_baseline_constraints
-    #
-    #     save_optimizer_last_run_constraints(st.session_state.last_run_constraints)  # Save this initial baseline state
-    #     save_allocation_data(st.session_state.dashboard_data)  # Save initial recommendations to the allocations table
-    #
-    #     st.success("Initial optimizer run completed and database seeded with default constraints!")
-    #     # A rerun is not strictly needed here as the changes are reflected in session state
-    #     # and the app is still in its initial render cycle.
 
 
 def initial_db_trigger():
