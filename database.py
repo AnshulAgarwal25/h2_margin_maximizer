@@ -59,7 +59,7 @@ def create_constraint_table(role_name, constraints_schema):
             return 0
         cursor.execute(create_table_sql)
         conn.commit()
-        print(f"Table '{table_name}' ensured to exist.")
+        # print(f"Table '{table_name}' ensured to exist.")
     except sqlite3.Error as e:
         print(f"Error creating table {table_name}: {e}")
     finally:
@@ -97,7 +97,7 @@ def create_allocation_table(allocation_areas):
     try:
         cursor.execute(create_table_sql)
         conn.commit()
-        print(f"Table '{table_name}' ensured to exist.")
+        # print(f"Table '{table_name}' ensured to exist.")
     except sqlite3.Error as e:
         print(f"Error creating table {table_name}: {e}")
     finally:
@@ -123,7 +123,7 @@ def create_optimizer_state_table():
     try:
         cursor.execute(create_table_sql)
         conn.commit()
-        print(f"Table '{table_name}' ensured to exist.")
+        # print(f"Table '{table_name}' ensured to exist.")
         # Ensure there's always at least one row for updates
         cursor.execute(
             f"INSERT OR IGNORE INTO {table_name} (id, last_run_constraints_json, last_updated) VALUES (1, ?, ?);",

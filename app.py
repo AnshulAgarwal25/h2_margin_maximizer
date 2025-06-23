@@ -1,5 +1,10 @@
 # app.py
+import time
+from datetime import datetime
+
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
+
 from database import (
     initialize_db,
     load_latest_allocation_data,
@@ -64,7 +69,6 @@ def main():
             ROLE_CONSTRAINTS = get_constraints()
             for role_name in ROLES:
                 if role_name in ROLE_CONSTRAINTS:
-                    # Load and store in session_state.constraint_values for comparison purposes
                     st.session_state.constraint_values[role_name] = load_latest_constraints(role_name,
                                                                                             ROLE_CONSTRAINTS[
                                                                                                 role_name])
@@ -72,5 +76,7 @@ def main():
         common_dashboard_page()
 
 
-if __name__ == "__main__":
-    main()
+refresh_interval_ms = 5 * 60 * 1000  # 3 minutes in milliseconds
+st_autorefresh(interval=refresh_interval_ms, key="autorefresh_timer")
+print(f"---Refreshed---{datetime.fromtimestamp(time.time()).strftime('%d-%m-%Y %H:%M:%S')}")
+main()

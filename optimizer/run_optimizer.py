@@ -17,7 +17,8 @@ def check_header_pressure():
     """
     dcs_constraints = populate_latest_dcs_constraints()
     header_pressure = dcs_constraints['header_pressure']
-    return header_pressure > 125, dcs_constraints
+    print(f'Header Pressure - {header_pressure}')
+    return header_pressure > 135, dcs_constraints
 
 
 def trigger_optimizer_if_needed(manual_trigger=False):
@@ -28,6 +29,7 @@ def trigger_optimizer_if_needed(manual_trigger=False):
     2. Header pressure is above X.
     3. User clicks the 'Run Optimizer' button.
     """
+    print("Log: In Optimizer Trigger")
     should_run_optimizer = False
     optimizer_trigger_reason = []
     ROLE_CONSTRAINTS = get_constraints()
@@ -35,7 +37,7 @@ def trigger_optimizer_if_needed(manual_trigger=False):
     # Compare current constraints with the last saved constraints for optimizer run
     current_all_constraints_snapshot = {}
     for role_name in ROLES:
-        if role_name in ROLE_CONSTRAINTS:  # Only roles with defined constraints are relevant
+        if role_name in ROLE_CONSTRAINTS:
             # Load the latest constraints for this role from the DB for comparison
             latest_db_constraints_for_role = load_latest_constraints(role_name, ROLE_CONSTRAINTS[role_name])
             current_all_constraints_snapshot[role_name] = copy.deepcopy(latest_db_constraints_for_role)
@@ -43,21 +45,21 @@ def trigger_optimizer_if_needed(manual_trigger=False):
     if current_all_constraints_snapshot != st.session_state.last_run_constraints:
         should_run_optimizer = True
         optimizer_trigger_reason.append("Constraint changes detected.")
-        # For debugging: print("Constraint changes detected.")
+        print("Constraint changes detected.")
 
     # Condition 2: Check header pressure
     header_pressure_check, dcs_constraints = check_header_pressure()
     if header_pressure_check:
         should_run_optimizer = True
         optimizer_trigger_reason.append("Header pressure condition met.")
-        # For debugging: print("Header pressure condition met.")
+        print("Header pressure condition met.")
 
     # Condition 3: Manual trigger
     if manual_trigger or st.session_state.run_optimizer_button_clicked:
         should_run_optimizer = True
         optimizer_trigger_reason.append("Manual 'Run Optimizer' button clicked.")
         st.session_state.run_optimizer_button_clicked = False  # Reset button flag
-        # For debugging: print("Manual button clicked.")
+        print("Manual button clicked.")
 
     if should_run_optimizer:
         st.info(f"Triggering optimizer due to: {', '.join(optimizer_trigger_reason)}")
@@ -144,7 +146,7 @@ def generate_hydrogen_recommendations(dcs_constraints):
             constraints_schema = ROLE_CONSTRAINTS[role]
             latest_role_constraints = load_latest_constraints(role, constraints_schema)
             all_latest_constraints[role] = latest_role_constraints
-            print(f"Loaded latest constraints for {role}: {latest_role_constraints}")
+            # print(f"Loaded latest constraints for {role}: {latest_role_constraints}")
         else:
             print(f"No specific constraints defined for role: {role}")
 
