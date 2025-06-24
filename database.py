@@ -87,11 +87,17 @@ def create_allocation_table(allocation_areas):
         f'"{area.replace(" ", "_").replace("-", "_")}_status" TEXT, "{area.replace(" ", "_").replace("-", "_")}_comment" TEXT'
         for area in allocation_areas])
 
+    # Build columns for min and max constraints
+    constraints_columns_sql = ", ".join([
+        f'"{area.replace(" ", "_").replace("-", "_")}_min_constrained" REAL, "{area.replace(" ", "_").replace("-", "_")}_max_constrained" REAL'
+        for area in allocation_areas])
+
     create_table_sql = f"""
     CREATE TABLE IF NOT EXISTS {table_name} (
         timestamp TEXT PRIMARY KEY,
         {data_columns_sql},
-        {status_comment_columns_sql}
+        {status_comment_columns_sql},
+        {constraints_columns_sql}
     );
     """
     try:
@@ -239,7 +245,11 @@ def load_latest_allocation_data(allocation_data_schema):
                     "allocated": row[f"{area_clean}_allocated"] if f"{area_clean}_allocated" in row.keys() else 0,
                     "recommended": row[f"{area_clean}_recommended"] if f"{area_clean}_recommended" in row.keys() else 0,
                     "status": row[f"{area_clean}_status"] if f"{area_clean}_status" in row.keys() else "pending",
-                    "comment": row[f"{area_clean}_comment"] if f"{area_clean}_comment" in row.keys() else ""
+                    "comment": row[f"{area_clean}_comment"] if f"{area_clean}_comment" in row.keys() else "",
+                    "min_constrained": row[
+                        f"{area_clean}_min_constrained"] if f"{area_clean}_min_constrained" in row.keys() else 0,
+                    "max_constrained": row[
+                        f"{area_clean}_max_constrained"] if f"{area_clean}_max_constrained" in row.keys() else 0,
                 }
             return latest_data
         else:
@@ -349,13 +359,17 @@ def save_allocation_data(allocation_data):
         columns.append(f'"{area_clean}_recommended"')
         columns.append(f'"{area_clean}_status"')
         columns.append(f'"{area_clean}_comment"')
+        columns.append(f'"{area_clean}_min_constrained"')
+        columns.append(f'"{area_clean}_max_constrained"')
 
         values.append(data.get("allocated", 0))
         values.append(data.get("recommended", 0))
         values.append(data.get("status", "pending"))
         values.append(data.get("comment", ""))
+        values.append(data.get("min_constrained", 0))
+        values.append(data.get("max_constrained", 0))
 
-        placeholders.extend(["?", "?", "?", "?"])
+        placeholders.extend(["?", "?", "?", "?", "?", "?"])
 
     columns_sql = ", ".join(columns)
     placeholders_sql = ", ".join(placeholders)

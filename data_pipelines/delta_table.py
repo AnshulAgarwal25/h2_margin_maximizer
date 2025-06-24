@@ -31,6 +31,7 @@ def get_dcs_data_table(table_name):
 
 def populate_latest_dcs_constraints():
     data = get_dcs_data_table(table_name='DCS_Tag1_st')
+    data = data.dropna()
     print("DCS Data Fetched")
     data = data.iloc[:1]
     data = data.apply(np.vectorize(lambda x: float(x) if isinstance(x, decimal.Decimal) else x))
@@ -81,4 +82,30 @@ def populate_latest_dcs_constraints():
         "boiler_p60_run": boiler_p60_run,
         "boiler_p120_run": boiler_p120_run,
     }
-    return dcs_constraints
+
+    h2_in_hcl = (data['H2_FLOW_TO_HCL_FURNACE_1'] + data['H2_FLOW_TO_HCL_FURNACE_2'] +
+                 data['H2_FLOW_TO_HCL_FURNACE_3'] + data['H2_FLOW_TO_HCL_FURNACE_4'] +
+                 data['H2_FLOW_TO_HCL_FURNACE_5'] + data['H2_FLOW_TO_HCL_FURNACE_6'])
+
+    current_flow = {
+        "pipeline": data['Hydrogen_Pipeline_current_NM3_per_hr'].values[0],
+        "bank": 0,
+        "hcl": h2_in_hcl,
+        "flaker-1": data['Flaker_450tpd_running_or_not_binary'].values[0],
+        "flaker-2": data['Flaker_600tpd_running_or_not_binary'].values[0],
+        "flaker-3": data['Flaker_850tpd_running_or_not_binary_1'].values[0],
+        "flaker-4": data['Flaker_850tpd_running_or_not_binary_2'].values[0],
+        "h2o2": data['H2O2_H2_current_NM3_per_hr'].values[0],
+        "boiler_p60": data['Boiler_P60_current_H2_NM3_per_hr'].values[0],
+        "boiler_p120": data['Boiler_P120_current_H2_NM3_per_hr'].values[0],
+        "vent": (caustic_production * 280) - (data['Hydrogen_Pipeline_current_NM3_per_hr'].values[0] +
+                                              h2_in_hcl +
+                                              data['Flaker_450tpd_running_or_not_binary'].values[0] +
+                                              data['Flaker_600tpd_running_or_not_binary'].values[0] +
+                                              data['Flaker_850tpd_running_or_not_binary_1'].values[0] +
+                                              data['Flaker_850tpd_running_or_not_binary_2'].values[0] +
+                                              data['H2O2_H2_current_NM3_per_hr'].values[0] +
+                                              data['Boiler_P60_current_H2_NM3_per_hr'].values[0] +
+                                              data['Boiler_P120_current_H2_NM3_per_hr'].values[0])
+    }
+    return dcs_constraints, current_flow

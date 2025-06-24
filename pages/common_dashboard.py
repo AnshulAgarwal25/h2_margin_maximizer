@@ -21,7 +21,9 @@ def common_dashboard_page():
          "Allocated (NM³/hr)": data["allocated"],
          "Recommended (NM³/hr)": data["recommended"],
          "Status": data["status"],
-         "Comments": data["comment"]}
+         "Comments": data["comment"],
+         "Min (Constrained)": data['min_constrained'],
+         "Max (Constrained)": data['max_constrained']}
         for area, data in st.session_state.dashboard_data.items()
     ])
 
@@ -44,7 +46,6 @@ def common_dashboard_page():
                                         1 if current_status == "rejected" else 0),
                                     key=f"action_{area}")
 
-            # new_status = ""
             if status_radio == "Accept":
                 new_status = "accepted"
             elif status_radio == "Reject":

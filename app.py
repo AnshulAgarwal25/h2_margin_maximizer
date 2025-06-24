@@ -75,15 +75,6 @@ def main():
                     st.session_state.constraint_values[role_name] = load_latest_constraints(role_name,
                                                                                             ROLE_CONSTRAINTS[
                                                                                                 role_name])
-        # # Prevent infinite re-trigger loop
-        # if "optimizer_triggered_in_current_run" not in st.session_state:
-        #     st.session_state.optimizer_triggered_in_current_run = False
-        #
-        # if not st.session_state.optimizer_triggered_in_current_run:
-        #     trigger_optimizer_if_needed()
-        #     st.session_state.optimizer_triggered_in_current_run = True
-        #
-        # # Finally render the dashboard
         trigger_optimizer_if_needed()
         common_dashboard_page()
 

@@ -95,7 +95,7 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
 
     # Constraint 3: Mandatory allocations for 'pipeline', 'hcl', and 'h2o2'.
     # These points must always be selected for allocation (`allocate[p]` must be 1).
-    mandatory_points = ['pipeline', 'hcl', 'h2o2']
+    mandatory_points = ['pipeline', 'hcl', 'h2o2', 'flaker-1', 'flaker-2']
 
     def mandatory_allocation_rule(model, p):
         if p in mandatory_points:

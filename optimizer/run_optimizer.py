@@ -15,10 +15,10 @@ def check_header_pressure():
     """
     Calls the data fetching script and gets header pressure checks and passes the dcs_constraints
     """
-    dcs_constraints = populate_latest_dcs_constraints()
+    dcs_constraints, current_flow = populate_latest_dcs_constraints()
     header_pressure = dcs_constraints['header_pressure']
     print(f'Header Pressure - {header_pressure}')
-    return header_pressure > 135, dcs_constraints
+    return header_pressure > 125, dcs_constraints, current_flow
 
 
 def trigger_optimizer_if_needed(manual_trigger=False):
@@ -48,7 +48,7 @@ def trigger_optimizer_if_needed(manual_trigger=False):
         print("Constraint changes detected.")
 
     # Condition 2: Check header pressure
-    header_pressure_check, dcs_constraints = check_header_pressure()
+    header_pressure_check, dcs_constraints, current_flow = check_header_pressure()
     if header_pressure_check:
         should_run_optimizer = True
         optimizer_trigger_reason.append("Header pressure condition met.")
@@ -63,7 +63,7 @@ def trigger_optimizer_if_needed(manual_trigger=False):
 
     if should_run_optimizer:
         st.info(f"Triggering optimizer due to: {', '.join(optimizer_trigger_reason)}")
-        new_recommendations = generate_hydrogen_recommendations(dcs_constraints)
+        new_recommendations = generate_hydrogen_recommendations(dcs_constraints, current_flow)
         st.session_state.dashboard_data = new_recommendations
         # Update last_run_constraints AFTER optimizer runs and BEFORE saving
         st.session_state.last_run_constraints = copy.deepcopy(current_all_constraints_snapshot)
@@ -127,7 +127,7 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
     return final_constraints, prices
 
 
-def generate_hydrogen_recommendations(dcs_constraints):
+def generate_hydrogen_recommendations(dcs_constraints, current_flow):
     """
     Reads the latest constraints from the database for all roles
     and generates dummy hydrogen allocation recommendations.
@@ -151,8 +151,6 @@ def generate_hydrogen_recommendations(dcs_constraints):
             print(f"No specific constraints defined for role: {role}")
 
     # --- Optimization Logic ---
-    # It would use `all_latest_constraints` to calculate the optimal
-    # 'recommended' hydrogen allocations for each area.
 
     if 'Caustic Plant' in all_latest_constraints and 'Duration of pipeline demand change (hrs)' in \
             all_latest_constraints['Caustic Plant']:
@@ -171,11 +169,14 @@ def generate_hydrogen_recommendations(dcs_constraints):
         for display_name, internal_key in key_mapping.items():
             if internal_key in solution['allocation_details']:
                 details = solution['allocation_details'][internal_key]
-                # Ensure the display_name exists in HYDROGEN_ALLOCATION_DATA before updating
+
                 if display_name in allocation_details:
+                    allocation_details[display_name]["allocated"] = current_flow[internal_key]
                     allocation_details[display_name]["recommended"] = details["amount"]
                     allocation_details[display_name]["status"] = "pending"  # Reset status to pending for new recs
                     allocation_details[display_name]["comment"] = ""  # Clear comments
+                    allocation_details[display_name]["min_constrained"] = final_constraints[internal_key]['min']
+                    allocation_details[display_name]["max_constrained"] = final_constraints[internal_key]['max']
                 else:
                     print(
                         f"Warning: Display name '{display_name}' "
@@ -186,14 +187,14 @@ def generate_hydrogen_recommendations(dcs_constraints):
                     f"not found in optimizer allocation details for display name '{display_name}'.")
     else:
         st.error(f"Optimizer failed or returned an infeasible solution: {solution.get('message', 'Unknown error')}")
-        # Potentially reset recommendations or keep old ones if optimizer fails
-        # For now, will just return current HYDROGEN_ALLOCATION_DATA as is (with existing allocated values)
-        # Or, could set recommended to 0 or some default if optimization fails.
+        # Reset recommendations to the current H2 flow as per DCS, if optimizer fails.
         for area in allocation_details:
+            allocation_details[area]["allocated"] = current_flow[key_mapping.get(area)]
             allocation_details[area]["recommended"] = allocation_details[area][
                 "allocated"]  # Keep current allocated as recommended
             allocation_details[area]["status"] = "pending"
-            allocation_details[area]["comment"] = "Optimizer failed to provide new recommendations."
+            allocation_details[area]["comment"] = "Optimizer failed to provide new recommendations. \
+            Current flow assigned."
 
     current_recommendations = copy.deepcopy(allocation_details)
 
@@ -225,7 +226,8 @@ def initial_db_trigger():
                                                                                   ROLE_CONSTRAINTS[role_name])
 
         # Run optimizer for the very first time
-        new_recommendations = generate_hydrogen_recommendations(dcs_constraints_dummy)
+        dcs_constraints, current_flow = populate_latest_dcs_constraints()
+        new_recommendations = generate_hydrogen_recommendations(dcs_constraints, current_flow)
         st.session_state.dashboard_data = new_recommendations
 
         # Save the initial optimizer state and recommendations to DB

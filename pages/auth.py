@@ -33,7 +33,7 @@ def auth_page():
                     selected_role,
                     ROLE_CONSTRAINTS.get(selected_role, [])
                 )
-            st.session_state.current_page = "constraint_entry"
+                st.session_state.current_page = "constraint_entry"
             st.rerun()
         else:
             st.info("Please select a role to continue.")
