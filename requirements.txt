@@ -10,3 +10,6 @@ streamlit-autorefresh==1.0.1
 # data pipelines
 deltalake==1.0.2
 adlfs==2024.12.0
+# pyspark==4.0.0
+
+# pyspark --packages io.delta:delta-core_2.12:2.4.0

@@ -57,7 +57,6 @@ def common_dashboard_page():
                 st.session_state.dashboard_data[area]["status"] = new_status
                 save_allocation_data(st.session_state.dashboard_data)
                 st.success(f"Status for {area} changed to {new_status}!")
-                # st.rerun()
 
         with col_comment:
             current_comment = data["comment"]
@@ -66,7 +65,6 @@ def common_dashboard_page():
                 st.session_state.dashboard_data[area]["comment"] = new_comment
                 save_allocation_data(st.session_state.dashboard_data)
                 st.success(f"Comment for {area} updated!")
-                st.rerun()
 
     st.markdown("---")
     if st.session_state.selected_role != "Dashboard":

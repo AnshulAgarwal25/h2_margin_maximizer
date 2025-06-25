@@ -11,6 +11,7 @@ from parameters.credentials import *
 
 def get_dcs_data_table(table_name):
     # Set credentials via environment variables for adlfs to work with DeltaTable
+    print("Reading DCS Data...")
     os.environ["AZURE_STORAGE_ACCOUNT_NAME"] = storage_account_name
     os.environ["AZURE_STORAGE_ACCOUNT_KEY"] = storage_account_key
 
@@ -18,7 +19,6 @@ def get_dcs_data_table(table_name):
                        "account_key": storage_account_key,
                        }
     delta_table_path = f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/Margin_Maximizer_db/external/{table_name}"
-
     dt = DeltaTable(delta_table_path, storage_options=storage_options)
     table = dt.to_pyarrow_table()
     sorted_indices = pc.sort_indices(table, sort_keys=[("TimeStamp", "descending")])
@@ -83,9 +83,9 @@ def populate_latest_dcs_constraints():
         "boiler_p120_run": boiler_p120_run,
     }
 
-    h2_in_hcl = (data['H2_FLOW_TO_HCL_FURNACE_1'] + data['H2_FLOW_TO_HCL_FURNACE_2'] +
-                 data['H2_FLOW_TO_HCL_FURNACE_3'] + data['H2_FLOW_TO_HCL_FURNACE_4'] +
-                 data['H2_FLOW_TO_HCL_FURNACE_5'] + data['H2_FLOW_TO_HCL_FURNACE_6'])
+    h2_in_hcl = (data['H2_FLOW_TO_HCL_FURNACE_1'].values[0] + data['H2_FLOW_TO_HCL_FURNACE_2'].values[0] +
+                 data['H2_FLOW_TO_HCL_FURNACE_3'].values[0] + data['H2_FLOW_TO_HCL_FURNACE_4'].values[0] +
+                 data['H2_FLOW_TO_HCL_FURNACE_5'].values[0] + data['H2_FLOW_TO_HCL_FURNACE_6'].values[0])
 
     current_flow = {
         "pipeline": data['Hydrogen_Pipeline_current_NM3_per_hr'].values[0],

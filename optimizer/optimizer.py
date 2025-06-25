@@ -38,7 +38,7 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
 
     # Determine effective contribution margins, applying priority for H2O2 if duration > 7
     effective_contribution_margin = contribution_margin_base.copy()
-    if duration > 7:
+    if duration > 3:
         effective_contribution_margin['H2O2'] += 1_000_000  # A large number to ensure priority
 
     # --- 2. Model Sets and Parameters ---

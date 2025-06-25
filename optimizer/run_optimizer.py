@@ -123,6 +123,12 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
                      'H2 generated (NM3) per ton of caustic']},
     }
 
+    for key, bounds in final_constraints.items():
+        if bounds['min'] < 0:
+            bounds['min'] = 0
+        if bounds['max'] < 0:
+            bounds['max'] = 0
+
     prices = constraints['Finance']
     return final_constraints, prices
 
@@ -186,15 +192,16 @@ def generate_hydrogen_recommendations(dcs_constraints, current_flow):
                     f"Warning: Internal key '{internal_key}' "
                     f"not found in optimizer allocation details for display name '{display_name}'.")
     else:
-        st.error(f"Optimizer failed or returned an infeasible solution: {solution.get('message', 'Unknown error')}")
+        # st.error(f"Optimizer failed or returned an infeasible solution: {solution.get('message', 'Unknown error')}")
         # Reset recommendations to the current H2 flow as per DCS, if optimizer fails.
         for area in allocation_details:
             allocation_details[area]["allocated"] = current_flow[key_mapping.get(area)]
             allocation_details[area]["recommended"] = allocation_details[area][
                 "allocated"]  # Keep current allocated as recommended
             allocation_details[area]["status"] = "pending"
-            allocation_details[area]["comment"] = "Optimizer failed to provide new recommendations. \
-            Current flow assigned."
+            allocation_details[area]["comment"] = "."
+            allocation_details[area]["min_constrained"] = final_constraints[key_mapping.get(area)]['min']
+            allocation_details[area]["max_constrained"] = final_constraints[key_mapping.get(area)]['max']
 
     current_recommendations = copy.deepcopy(allocation_details)
 
