@@ -1,5 +1,8 @@
 timestamp,user,role,parameter,old_value,new_value,comments
-2025-06-12 15:25:46,Anshul,Marketing,Demand - H2O2 (TPH) Min,0,75,
-2025-06-12 15:25:46,Anshul,Marketing,Demand - H2O2 (TPH) Max,100,95,
-2025-06-12 15:25:46,Anshul,Marketing,Demand - Flaker (TPH) Min,0,400,
-2025-06-12 15:25:46,Anshul,Marketing,Demand - Flaker (TPH) Max,100,400,
+2025-06-12 15:25:46,Anshul,Marketing,Demand - H2O2 (TPH) Min,0.0,75.0,
+2025-06-12 15:25:46,Anshul,Marketing,Demand - H2O2 (TPH) Max,100.0,95.0,
+2025-06-12 15:25:46,Anshul,Marketing,Demand - Flaker (TPH) Min,0.0,400.0,
+2025-06-12 15:25:46,Anshul,Marketing,Demand - Flaker (TPH) Max,100.0,400.0,
+2025-06-26 10:45:58,AnshulAgarwal@dcmshriramprd.onmicrosoft.com,Finance,Bank,20.0,5.0,
+2025-06-26 10:51:30,AnshulAgarwal@dcmshriramprd.onmicrosoft.com,Caustic Plant,H2 required (NM3) per ton of HCl,365.0,375.0,
+2025-06-26 10:51:30,AnshulAgarwal@dcmshriramprd.onmicrosoft.com,Caustic Plant,H2 generated (NM3) per ton of caustic,280.0,300.0,

@@ -1,5 +1,6 @@
 # app.py
 import time
+import warnings
 from datetime import datetime
 
 import streamlit as st
@@ -19,6 +20,7 @@ from params import *
 st.set_page_config(layout="wide", page_title="Hydrogen Allocation Tool",
                    initial_sidebar_state="collapsed", page_icon="📈")
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 initialize_db(ROLES, get_constraints(), list(HYDROGEN_ALLOCATION_DATA.keys()))
 
 # --- Session State Initialization ---
