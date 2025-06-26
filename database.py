@@ -343,6 +343,8 @@ def save_allocation_data(allocation_data):
     """
     Saves a new timestamped entry of allocation data.
     """
+    allocation_data.pop("caustic", None)  # dropping keys which are not required to be saved
+
     conn = get_db_connection()
     cursor = conn.cursor()
     table_name = "allocations"

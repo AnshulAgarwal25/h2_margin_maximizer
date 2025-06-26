@@ -18,6 +18,7 @@ def check_header_pressure():
     dcs_constraints, current_flow = populate_latest_dcs_constraints()
     header_pressure = dcs_constraints['header_pressure']
     print(f'Header Pressure - {header_pressure}')
+    st.sidebar.write(f"Header Pressure: {header_pressure}")
     return header_pressure > 125, dcs_constraints, current_flow
 
 
@@ -64,15 +65,17 @@ def trigger_optimizer_if_needed(manual_trigger=False):
     if should_run_optimizer:
         st.info(f"Triggering optimizer due to: {', '.join(optimizer_trigger_reason)}")
         new_recommendations = generate_hydrogen_recommendations(dcs_constraints, current_flow)
+
+        st.sidebar.write(f"Caustic Production: {round(dcs_constraints['caustic_production'], 2)} TPH")
+        st.sidebar.write(f"H2 Generated: {round(dcs_constraints['caustic_production'], 2) * 280} NM3/hr")
+
         st.session_state.dashboard_data = new_recommendations
         # Update last_run_constraints AFTER optimizer runs and BEFORE saving
         st.session_state.last_run_constraints = copy.deepcopy(current_all_constraints_snapshot)
         save_optimizer_last_run_constraints(st.session_state.last_run_constraints)
         st.success("Optimizer run completed! Dashboard updated.")
         save_allocation_data(st.session_state.dashboard_data)
-        # st.rerun()
     else:
-        # print("Optimizer conditions not met. Not running.") # For debugging
         pass  # Optimizer not triggered
 
 
@@ -95,8 +98,11 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
 
         'bank': {'min': 0, 'max': dcs_constraints['bank_available']},
 
-        'h2o2': {'min': constraints['H2O2 Plant']['H2O2 Production Capacity (TPH)']['min'] * constraints['H2O2 Plant'][
-            'H2 (NM3) required per ton of H2O2'],
+        'h2o2': {'min': max(constraints['H2O2 Plant']['H2O2 Production Capacity (TPH)']['min'] *
+                            constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'],
+
+                            constraints['Marketing']['Demand - H2O2 (TPH)']['min'] *
+                            constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2']),
                  'max': max(dcs_constraints['h2o2_production'] *
                             constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'],
 
@@ -162,11 +168,11 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
     # cleaning for dcs readings
     for key, bounds in final_constraints.items():
         bounds['min'] = max(bounds['min'], 0)
-        bounds['max'] = max(bounds['max'], 0)
+    bounds['max'] = max(bounds['max'], 0)
 
     # doing this to de-prioritize bank filling when header pressure in control
     if dcs_constraints['header_pressure'] < constraints['H2 Plant']['Header Pressure Threshold (kgf/cm2)']['max']:
-        prices['Bank'] = prices['H2O2'] - 1
+        prices['Bank'] = 0
 
     return final_constraints, prices
 
@@ -273,6 +279,10 @@ def initial_db_trigger():
         # Run optimizer for the very first time
         dcs_constraints, current_flow = populate_latest_dcs_constraints()
         new_recommendations = generate_hydrogen_recommendations(dcs_constraints, current_flow)
+
+        st.sidebar.write(f"Caustic Production: {round(dcs_constraints['caustic_production'], 2)} TPH")
+        st.sidebar.write(f"H2 Generated: {round(dcs_constraints['caustic_production'], 2) * 280} NM3/hr")
+
         st.session_state.dashboard_data = new_recommendations
 
         # Save the initial optimizer state and recommendations to DB

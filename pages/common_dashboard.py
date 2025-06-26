@@ -8,12 +8,10 @@ from utils.downloader import downloader_allocation, downloader_audit
 
 def common_dashboard_page():
     """Displays the common hydrogen allocation dashboard."""
-    st.title("Common Hydrogen Allocation Dashboard (NM³/hr)")
+    st.title("Hydrogen Allocation Dashboard (NM³/hr)")
     st.write(f"Logged in as: **{st.session_state.username}** (Role: **{st.session_state.selected_role}**)")
 
     st.write("### Current Hydrogen Allocations:")
-    # with st.spinner("Optimizer Running..."):
-    #     trigger_optimizer_if_needed()
 
     # Convert dashboard data to a DataFrame for easy display
     df = pd.DataFrame([
