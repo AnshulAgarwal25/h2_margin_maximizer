@@ -3,7 +3,7 @@ import streamlit as st
 
 from database import save_allocation_data
 from optimizer.run_optimizer import trigger_optimizer_if_needed
-from utils.downloader import downloader
+from utils.downloader import downloader_allocation, downloader_audit
 
 
 def common_dashboard_page():
@@ -77,4 +77,5 @@ def common_dashboard_page():
     st.button("Change Role",
               on_click=lambda: st.session_state.update(current_page="role_selection", selected_role=None))
 
-    downloader()
+    downloader_allocation()
+    downloader_audit()

@@ -77,38 +77,73 @@ def trigger_optimizer_if_needed(manual_trigger=False):
 
 
 def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dummy):
+    for flaker in ['flaker-1_load', 'flaker-2_load']:
+        if dcs_constraints[flaker] <= 10:
+            dcs_constraints[flaker] = 0
+
     final_constraints = {
         'pipeline': {'min': dcs_constraints['pipeline_flow'], 'max': dcs_constraints['pipeline_flow']},
 
+        # 'hcl': {
+        #     'min': dcs_constraints['hcl_production']*constraints['Caustic Plant']['H2 required (NM3) per ton of HCl'],
+        #     'max':dcs_constraints['hcl_production']*constraints['Caustic Plant']['H2 required (NM3) per ton of HCl']},
+
         'hcl': {
-            'min': dcs_constraints['hcl_production'] * constraints['Caustic Plant']['H2 required (NM3) per ton of HCl'],
-            'max': dcs_constraints['hcl_production'] * constraints['Caustic Plant'][
-                'H2 required (NM3) per ton of HCl']},
+            'min': dcs_constraints['hcl_h2_flow'],
+            'max': dcs_constraints['hcl_h2_flow'],
+        },
 
         'bank': {'min': 0, 'max': dcs_constraints['bank_available']},
 
         'h2o2': {'min': constraints['H2O2 Plant']['H2O2 Production Capacity (TPH)']['min'] * constraints['H2O2 Plant'][
             'H2 (NM3) required per ton of H2O2'],
-                 'max': dcs_constraints['h2o2_production'] * constraints['H2O2 Plant'][
-                     'H2 (NM3) required per ton of H2O2']},
+                 'max': max(dcs_constraints['h2o2_production'] *
+                            constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'],
 
-        'flaker-1': {'min': dcs_constraints['flaker-1_load'] * constraints['Flaker Plant'][
-            'Flaker-1 H2 Specific Consumption (NM3/Ton)'],
-                     'max': dcs_constraints['flaker-1_load'] * constraints['Flaker Plant'][
-                         'Flaker-1 H2 Specific Consumption (NM3/Ton)']},
+                            constraints['Marketing']['Demand - H2O2 (TPH)']['max'] *
+                            constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'])},
 
-        'flaker-2': {'min': dcs_constraints['flaker-2_load'] * constraints['Flaker Plant'][
-            'Flaker-2 H2 Specific Consumption (NM3/Ton)'],
-                     'max': dcs_constraints['flaker-2_load'] * constraints['Flaker Plant'][
-                         'Flaker-2 H2 Specific Consumption (NM3/Ton)']},
+        'flaker-1': {'min': min(dcs_constraints['flaker-1_load'] *
+                                constraints['Flaker Plant']['Flaker-1 H2 Specific Consumption (NM3/Ton)'],
+
+                                (dcs_constraints['450tpd_caustic'] + dcs_constraints['600tpd_caustic']) *
+                                constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic']
+                                ),
+
+                     'max': min(dcs_constraints['flaker-1_load'] *
+                                constraints['Flaker Plant']['Flaker-1 H2 Specific Consumption (NM3/Ton)'],
+
+                                (dcs_constraints['450tpd_caustic'] + dcs_constraints['600tpd_caustic']) *
+                                constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic']
+                                )},
+
+        'flaker-2': {'min': min(dcs_constraints['flaker-2_load'] *
+                                constraints['Flaker Plant']['Flaker-2 H2 Specific Consumption (NM3/Ton)'],
+
+                                (dcs_constraints['450tpd_caustic'] + dcs_constraints['600tpd_caustic']) *
+                                constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic']
+                                ),
+
+                     'max': min(dcs_constraints['flaker-2_load'] *
+                                constraints['Flaker Plant']['Flaker-2 H2 Specific Consumption (NM3/Ton)'],
+
+                                (dcs_constraints['450tpd_caustic'] + dcs_constraints['600tpd_caustic']) *
+                                constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic']
+                                )},
 
         'flaker-3': {'min': 750,
-                     'max': dcs_constraints['flaker-3_load'] * constraints['Flaker Plant'][
-                         'Flaker-3 H2 Specific Consumption (NM3/Ton)']},
+                     'max': min(dcs_constraints['flaker-3_load'] *
+                                constraints['Flaker Plant']['Flaker-3 H2 Specific Consumption (NM3/Ton)'],
+
+                                dcs_constraints['850tpd_caustic'] *
+                                constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic'])},
 
         'flaker-4': {'min': 750,
-                     'max': dcs_constraints['flaker-4_load'] * constraints['Flaker Plant'][
-                         'Flaker-4 H2 Specific Consumption (NM3/Ton)']},
+                     'max': min(dcs_constraints['flaker-4_load'] *
+                                constraints['Flaker Plant']['Flaker-4 H2 Specific Consumption (NM3/Ton)'],
+
+                                dcs_constraints['850tpd_caustic'] *
+                                constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic'])},
 
         'boiler_p60': {
             'min': constraints['Power Plant']['P60 - H2 capacity']['min'] * dcs_constraints['boiler_p60_run'],
@@ -122,14 +157,17 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
                  'max': dcs_constraints['caustic_production'] * constraints['Caustic Plant'][
                      'H2 generated (NM3) per ton of caustic']},
     }
-
-    for key, bounds in final_constraints.items():
-        if bounds['min'] < 0:
-            bounds['min'] = 0
-        if bounds['max'] < 0:
-            bounds['max'] = 0
-
     prices = constraints['Finance']
+
+    # cleaning for dcs readings
+    for key, bounds in final_constraints.items():
+        bounds['min'] = max(bounds['min'], 0)
+        bounds['max'] = max(bounds['max'], 0)
+
+    # doing this to de-prioritize bank filling when header pressure in control
+    if dcs_constraints['header_pressure'] < constraints['H2 Plant']['Header Pressure Threshold (kgf/cm2)']['max']:
+        prices['Bank'] = prices['H2O2'] - 1
+
     return final_constraints, prices
 
 

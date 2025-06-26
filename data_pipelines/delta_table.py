@@ -41,7 +41,13 @@ def populate_latest_dcs_constraints():
                           data['Caustic_Caustic Production_600tpd_TPH'].values[0] +
                           data['Caustic_Caustic Production_850tpd_TPH'].values[0]) / 24  # original data in TPD
 
-    pipeline_flow = data['Hydrogen_Pipeline_current_NM3_per_hr'].values[0]
+    # pipeline_flow = data['Hydrogen_Pipeline_current_NM3_per_hr'].values[0]
+    pipeline_flow = (data['AARTI_H2_PIPELINE_SUPPLY'].values[0] + data['FARMSON_H2_PIPELINE_SUPPLY'].values[0] +
+                     data['VALIANT_1_H2_PIPELINE_SUPPLY'].values[0] + data['GULSHANH2_PIPELINE_SUPPLY'].values[0] +
+                     data['PANOLIH2_PIPELINE_SUPPLY'].values[0] + data['VALIANT_2_H2_PIPELINE_SUPPLY'].values[0] +
+                     data['CHEMIE_H2_PIPELINE_SUPPLY'].values[0] + data['LANXESS_H2_PIPELINE_SUPPLY'].values[0] +
+                     data['ANUPAM_RASAYAN_H2_PIPELINE_SUPPLY'].values[0] + data['UPL_5_H2_PIPELINE_SUPPLY'].values[0])
+
     header_pressure = data['Hydrogen_Header_pressure_current_kgf_per_cm2'].values[0]
 
     bank_available = 0
@@ -68,7 +74,18 @@ def populate_latest_dcs_constraints():
     boiler_p60_run = 1 if data['Boiler_P60_running_or_not_binary'].values[0] > 0 else 0
     boiler_p120_run = 1 if data['Boiler_P120_running_or_not_binary'].values[0] > 0 else 0
 
+    ech_flow = data['ECH_H2_PIPELINE_SUPPLY'].values[0]
+
+    h2_in_hcl = (data['H2_FLOW_TO_HCL_FURNACE_1'].values[0] + data['H2_FLOW_TO_HCL_FURNACE_2'].values[0] +
+                 data['H2_FLOW_TO_HCL_FURNACE_3'].values[0] + data['H2_FLOW_TO_HCL_FURNACE_4'].values[0] +
+                 data['H2_FLOW_TO_HCL_FURNACE_5'].values[0] + data['H2_FLOW_TO_HCL_FURNACE_6'].values[0])
+
     dcs_constraints = {
+        "332tpd_caustic": data['Caustic_Caustic Production_332tpd_TPH'].values[0],
+        "450tpd_caustic": data['Caustic_Caustic Production_450tpd_TPH'].values[0],
+        "600tpd_caustic": data['Caustic_Caustic Production_600tpd_TPH'].values[0],
+        "850tpd_caustic": data['Caustic_Caustic Production_850tpd_TPH'].values[0],
+
         "caustic_production": caustic_production,
         "pipeline_flow": pipeline_flow,
         "header_pressure": header_pressure,
@@ -81,16 +98,14 @@ def populate_latest_dcs_constraints():
         "flaker-4_load": flaker4_load,
         "boiler_p60_run": boiler_p60_run,
         "boiler_p120_run": boiler_p120_run,
+        "hcl_h2_flow": h2_in_hcl + ech_flow
     }
 
-    h2_in_hcl = (data['H2_FLOW_TO_HCL_FURNACE_1'].values[0] + data['H2_FLOW_TO_HCL_FURNACE_2'].values[0] +
-                 data['H2_FLOW_TO_HCL_FURNACE_3'].values[0] + data['H2_FLOW_TO_HCL_FURNACE_4'].values[0] +
-                 data['H2_FLOW_TO_HCL_FURNACE_5'].values[0] + data['H2_FLOW_TO_HCL_FURNACE_6'].values[0])
-
     current_flow = {
-        "pipeline": data['Hydrogen_Pipeline_current_NM3_per_hr'].values[0],
+        "pipeline": pipeline_flow,
         "bank": 0,
-        "hcl": h2_in_hcl,
+        "ech_flow": ech_flow,
+        "hcl": h2_in_hcl + ech_flow,
         "flaker-1": data['Flaker_450tpd_running_or_not_binary'].values[0],
         "flaker-2": data['Flaker_600tpd_running_or_not_binary'].values[0],
         "flaker-3": data['Flaker_850tpd_running_or_not_binary_1'].values[0],
@@ -98,8 +113,8 @@ def populate_latest_dcs_constraints():
         "h2o2": data['H2O2_H2_current_NM3_per_hr'].values[0],
         "boiler_p60": data['Boiler_P60_current_H2_NM3_per_hr'].values[0],
         "boiler_p120": data['Boiler_P120_current_H2_NM3_per_hr'].values[0],
-        "vent": (caustic_production * 280) - (data['Hydrogen_Pipeline_current_NM3_per_hr'].values[0] +
-                                              h2_in_hcl +
+        "vent": (caustic_production * 280) - (pipeline_flow +
+                                              h2_in_hcl + ech_flow +
                                               data['Flaker_450tpd_running_or_not_binary'].values[0] +
                                               data['Flaker_600tpd_running_or_not_binary'].values[0] +
                                               data['Flaker_850tpd_running_or_not_binary_1'].values[0] +
