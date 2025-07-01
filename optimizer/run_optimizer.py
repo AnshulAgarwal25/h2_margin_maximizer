@@ -19,7 +19,14 @@ def check_header_pressure():
     header_pressure = dcs_constraints['header_pressure']
     print(f'Header Pressure - {header_pressure}')
     st.sidebar.write(f"Header Pressure: {header_pressure}")
-    return header_pressure > 125, dcs_constraints, current_flow
+
+    if 'H2 Plant' in st.session_state.constraint_values.keys():
+        header_pressure_threshold = \
+            st.session_state.constraint_values['H2 Plant']['Header Pressure Threshold (kgf/cm2)']['max']
+    else:
+        header_pressure_threshold = \
+            st.session_state.last_run_constraints['H2 Plant']['Header Pressure Threshold (kgf/cm2)']['max']
+    return header_pressure > header_pressure_threshold, dcs_constraints, current_flow
 
 
 def trigger_optimizer_if_needed(manual_trigger=False):
@@ -67,7 +74,14 @@ def trigger_optimizer_if_needed(manual_trigger=False):
         new_recommendations = generate_hydrogen_recommendations(dcs_constraints, current_flow)
 
         st.sidebar.write(f"Caustic Production: {round(dcs_constraints['caustic_production'], 2)} TPH")
-        st.sidebar.write(f"H2 Generated: {round(dcs_constraints['caustic_production'], 2) * 280} NM3/hr")
+
+        if 'Caustic Plant' in st.session_state.constraint_values.keys():
+            h2_generation = st.session_state.constraint_values['Caustic Plant']['H2 generated (NM3) per ton of caustic']
+        else:
+            h2_generation = st.session_state.last_run_constraints['Caustic Plant'][
+                'H2 generated (NM3) per ton of caustic']
+
+        st.sidebar.write(f"H2 Generated: {round(dcs_constraints['caustic_production'], 2) * h2_generation} NM3/hr")
 
         st.session_state.dashboard_data = new_recommendations
         # Update last_run_constraints AFTER optimizer runs and BEFORE saving
@@ -75,6 +89,7 @@ def trigger_optimizer_if_needed(manual_trigger=False):
         save_optimizer_last_run_constraints(st.session_state.last_run_constraints)
         st.success("Optimizer run completed! Dashboard updated.")
         save_allocation_data(st.session_state.dashboard_data)
+        st.session_state.current_page = "dashboard"
     else:
         pass  # Optimizer not triggered
 
@@ -87,10 +102,6 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
     final_constraints = {
         'pipeline': {'min': dcs_constraints['pipeline_flow'], 'max': dcs_constraints['pipeline_flow']},
 
-        # 'hcl': {
-        #     'min': dcs_constraints['hcl_production']*constraints['Caustic Plant']['H2 required (NM3) per ton of HCl'],
-        #     'max':dcs_constraints['hcl_production']*constraints['Caustic Plant']['H2 required (NM3) per ton of HCl']},
-
         'hcl': {
             'min': dcs_constraints['hcl_h2_flow'],
             'max': dcs_constraints['hcl_h2_flow'],
@@ -101,10 +112,8 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
         'h2o2': {'min': max(constraints['H2O2 Plant']['H2O2 Production Capacity (TPH)']['min'] *
                             constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'],
 
-                            constraints['Marketing']['Demand - H2O2 (TPH)']['min'] *
-                            constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2']),
-                 'max': max(dcs_constraints['h2o2_production'] *
-                            constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'],
+                            dcs_constraints['h2o2_h2_flow']),
+                 'max': min(dcs_constraints['h2o2_h2_flow'],
 
                             constraints['Marketing']['Demand - H2O2 (TPH)']['max'] *
                             constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'])},
@@ -174,6 +183,29 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
     if dcs_constraints['header_pressure'] < constraints['H2 Plant']['Header Pressure Threshold (kgf/cm2)']['max']:
         prices['Bank'] = 0
 
+    # getting h2o2 min to min production possible when duration change condition is met and \
+    # header pressure breach is observed
+    if (dcs_constraints['header_pressure'] >= constraints['H2 Plant']['Header Pressure Threshold (kgf/cm2)']['max'] and
+            constraints['Caustic Plant']['Duration of pipeline demand change (hrs)'] >= constraints['H2O2 Plant'][
+                'Load increase/decrease time for H2O2 (hrs)']):
+        final_constraints['h2o2']['min'] = constraints['H2O2 Plant']['H2O2 Production Capacity (TPH)']['min'] * \
+                                           constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2']
+
+        final_constraints['h2o2']['max'] = min(constraints['H2O2 Plant']['H2O2 Production Capacity (TPH)']['max'] *
+                                               constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'],
+
+                                               constraints['Marketing']['Demand - H2O2 (TPH)']['max'] *
+                                               constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'])
+
+    # getting h2o2 min to min production possible when duration change condition is met and \
+    # header pressure breach is observed
+    if (dcs_constraints['header_pressure'] <= constraints['H2 Plant']['Header Pressure Threshold (kgf/cm2)'][
+        'min'] and
+            constraints['Caustic Plant']['Duration of pipeline demand change (hrs)'] >= constraints['H2O2 Plant'][
+                'Load increase/decrease time for H2O2 (hrs)']):
+        final_constraints['h2o2']['min'] = constraints['H2O2 Plant']['H2O2 Production Capacity (TPH)']['min'] * \
+                                           constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2']
+
     return final_constraints, prices
 
 
@@ -223,7 +255,7 @@ def generate_hydrogen_recommendations(dcs_constraints, current_flow):
                 if display_name in allocation_details:
                     allocation_details[display_name]["allocated"] = current_flow[internal_key]
                     allocation_details[display_name]["recommended"] = details["amount"]
-                    allocation_details[display_name]["status"] = "pending"  # Reset status to pending for new recs
+                    allocation_details[display_name]["status"] = "accepted"  # Reset status to pending for new recs
                     allocation_details[display_name]["comment"] = ""  # Clear comments
                     allocation_details[display_name]["min_constrained"] = final_constraints[internal_key]['min']
                     allocation_details[display_name]["max_constrained"] = final_constraints[internal_key]['max']
@@ -242,13 +274,13 @@ def generate_hydrogen_recommendations(dcs_constraints, current_flow):
             allocation_details[area]["allocated"] = current_flow[key_mapping.get(area)]
             allocation_details[area]["recommended"] = allocation_details[area][
                 "allocated"]  # Keep current allocated as recommended
-            allocation_details[area]["status"] = "pending"
+            allocation_details[area]["status"] = "accepted"
             allocation_details[area]["comment"] = "."
             allocation_details[area]["min_constrained"] = final_constraints[key_mapping.get(area)]['min']
             allocation_details[area]["max_constrained"] = final_constraints[key_mapping.get(area)]['max']
 
     current_recommendations = copy.deepcopy(allocation_details)
-
+    st.session_state.optimizer_run = True
     return current_recommendations
 
 

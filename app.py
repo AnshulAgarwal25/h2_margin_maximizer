@@ -51,6 +51,9 @@ if "last_run_constraints" not in st.session_state:
 if "run_optimizer_button_clicked" not in st.session_state:
     st.session_state.run_optimizer_button_clicked = False
 
+if "optimizer_run" not in st.session_state:
+    st.session_state.optimizer_run = False
+
 
 def main():
     # Display current page based on session state

@@ -98,7 +98,8 @@ def populate_latest_dcs_constraints():
         "flaker-4_load": flaker4_load,
         "boiler_p60_run": boiler_p60_run,
         "boiler_p120_run": boiler_p120_run,
-        "hcl_h2_flow": h2_in_hcl + ech_flow
+        "hcl_h2_flow": h2_in_hcl + ech_flow,
+        "h2o2_h2_flow": data['H2O2_H2_current_NM3_per_hr'].values[0],
     }
 
     current_flow = {
@@ -123,4 +124,7 @@ def populate_latest_dcs_constraints():
                                               data['Boiler_P60_current_H2_NM3_per_hr'].values[0] +
                                               data['Boiler_P120_current_H2_NM3_per_hr'].values[0])
     }
+    dcs_constraints = {k: (v if v >= 0 else 0) for k, v in dcs_constraints.items()}
+    current_flow = {k: (v if v >= 0 else 0) for k, v in current_flow.items()}
+
     return dcs_constraints, current_flow

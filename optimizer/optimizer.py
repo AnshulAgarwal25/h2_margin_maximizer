@@ -1,7 +1,113 @@
+import streamlit as st
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
 
 from params import *
+
+
+# def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
+#     """
+#     Builds a Pyomo optimization model for hydrogen allocation.
+#
+#     Args:
+#         total_h2_generated (float): The total amount of H2 available for allocation.
+#         duration (int): The duration in days, used to determine H2O2 allocation priority.
+#         final_constraints (dict): Final min and max for allocation areas
+#         prices (dict): Contribution margin for all allocation areas
+#
+#     Returns:
+#         pyomo.environ.ConcreteModel: The constructed Pyomo model.
+#     """
+#     model = ConcreteModel()
+#
+#     dummy_constraints = final_constraints
+#     contribution_margin_base = prices
+#
+#     allocation_to_margin_category = {
+#         'pipeline': 'Pipeline',
+#         'hcl': 'HCl',
+#         'bank': 'Bank',
+#         'h2o2': 'H2O2',
+#         'flaker-1': 'Flaker',
+#         'flaker-2': 'Flaker',
+#         'flaker-3': 'Flaker',
+#         'flaker-4': 'Flaker',
+#         'boiler_p60': 'Boiler',
+#         'boiler_p120': 'Boiler',
+#         'vent': 'Vent'
+#     }
+#
+#     # Determine effective contribution margins, applying priority for H2O2 if duration > 7
+#     effective_contribution_margin = contribution_margin_base.copy()
+#     if duration > 3:
+#         effective_contribution_margin['H2O2'] += 1_000_000  # A large number to ensure priority
+#
+#     # --- 2. Model Sets and Parameters ---
+#     model.ALLOCATION_POINTS = Set(initialize=dummy_constraints.keys())
+#     model.min_h2_limit = Param(model.ALLOCATION_POINTS, initialize={k: v['min'] for k, v in dummy_constraints.items()})
+#     model.max_h2_limit = Param(model.ALLOCATION_POINTS, initialize={k: v['max'] for k, v in dummy_constraints.items()})
+#
+#     def _get_margin(model, point):
+#         """Helper function to get the margin based on the allocation category."""
+#         category = allocation_to_margin_category[point]
+#         return effective_contribution_margin[category]
+#
+#     model.margin = Param(model.ALLOCATION_POINTS, initialize=_get_margin)
+#
+#     # --- 3. Decision Variables ---
+#     # Binary variable: `allocate[p]` is 1 if H2 is allocated to point `p`, 0 otherwise.
+#     model.allocate = Var(model.ALLOCATION_POINTS, domain=Binary)
+#     # Continuous variable: `h2_amount[p]` is the actual amount of H2 allocated to point `p`.
+#     model.h2_amount = Var(model.ALLOCATION_POINTS, domain=NonNegativeReals)
+#
+#     # --- 4. Objective Function ---
+#     def objective_rule(model):
+#         return sum(model.h2_amount[p] * model.margin[p] for p in model.ALLOCATION_POINTS)
+#
+#     model.objective = Objective(rule=objective_rule, sense=maximize)
+#
+#     # --- 5. Constraints ---
+#
+#     # Constraint 1: Total H2 allocated must not exceed the total available H2.
+#     def total_h2_constraint_rule(model):
+#         return sum(model.h2_amount[p] for p in model.ALLOCATION_POINTS) <= total_h2_generated
+#
+#     model.total_h2_constraint = Constraint(rule=total_h2_constraint_rule)
+#
+#     # Constraint 2: Link `h2_amount` to `allocate` and enforce min/max bounds.
+#     # If `allocate[p]` is 0, then `h2_amount[p]` must be 0.
+#     # If `allocate[p]` is 1, then `h2_amount[p]` must be within its specified min and max limits.
+#
+#     # Minimum H2 allocation constraint: `h2_amount[p] >= min_h2_limit[p] * allocate[p]`
+#     # If allocate[p] is 0, h2_amount[p] >= 0 (always true for NonNegativeReals)
+#     # If allocate[p] is 1, h2_amount[p] >= min_h2_limit[p]
+#     def min_h2_allocation_rule(model, p):
+#         return model.h2_amount[p] >= model.min_h2_limit[p] * model.allocate[p]
+#
+#     model.min_h2_allocation = Constraint(model.ALLOCATION_POINTS, rule=min_h2_allocation_rule)
+#
+#     # Maximum H2 allocation constraint: `h2_amount[p] <= max_h2_limit[p] * allocate[p]`
+#     # If allocate[p] is 0, h2_amount[p] <= 0, forcing h2_amount[p] to be 0 (since it's NonNegative)
+#     # If allocate[p] is 1, h2_amount[p] <= max_h2_limit[p]
+#     def max_h2_allocation_rule(model, p):
+#         return model.h2_amount[p] <= model.max_h2_limit[p] * model.allocate[p]
+#
+#     model.max_h2_allocation = Constraint(model.ALLOCATION_POINTS, rule=max_h2_allocation_rule)
+#
+#     # Constraint 3: Mandatory allocations for 'pipeline', 'hcl', and 'h2o2'.
+#     # These points must always be selected for allocation (`allocate[p]` must be 1).
+#     mandatory_points = ['pipeline', 'hcl', 'h2o2', 'flaker-1', 'flaker-2']
+#
+#     def mandatory_allocation_rule(model, p):
+#         if p in mandatory_points:
+#             return model.allocate[p] == 1
+#         return Constraint.Skip  # Skip this constraint for non-mandatory points
+#
+#     model.mandatory_allocation = Constraint(model.ALLOCATION_POINTS, rule=mandatory_allocation_rule)
+#
+#     model.dual = Suffix(direction=Suffix.IMPORT)
+#
+#     return model
 
 
 def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
@@ -36,74 +142,92 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
         'vent': 'Vent'
     }
 
-    # Determine effective contribution margins, applying priority for H2O2 if duration > 7
+    # Determine effective contribution margins, applying priority for H2O2 if duration > 3
     effective_contribution_margin = contribution_margin_base.copy()
-    if duration > 3:
+
+    if 'H2O2 Plant' in st.session_state.constraint_values.keys():
+        duration_threshold = \
+            st.session_state.constraint_values['H2O2 Plant']['Load increase/decrease time for H2O2 (hrs)']
+    else:
+        duration_threshold = \
+            st.session_state.last_run_constraints['H2O2 Plant']['Load increase/decrease time for H2O2 (hrs)']
+
+    if duration > duration_threshold:
         effective_contribution_margin['H2O2'] += 1_000_000  # A large number to ensure priority
 
-    # --- 2. Model Sets and Parameters ---
+    # --- 1. Model Sets and Parameters ---
     model.ALLOCATION_POINTS = Set(initialize=dummy_constraints.keys())
     model.min_h2_limit = Param(model.ALLOCATION_POINTS, initialize={k: v['min'] for k, v in dummy_constraints.items()})
     model.max_h2_limit = Param(model.ALLOCATION_POINTS, initialize={k: v['max'] for k, v in dummy_constraints.items()})
 
     def _get_margin(model, point):
-        """Helper function to get the margin based on the allocation category."""
         category = allocation_to_margin_category[point]
         return effective_contribution_margin[category]
 
     model.margin = Param(model.ALLOCATION_POINTS, initialize=_get_margin)
 
-    # --- 3. Decision Variables ---
-    # Binary variable: `allocate[p]` is 1 if H2 is allocated to point `p`, 0 otherwise.
+    # --- 2. Decision Variables ---
     model.allocate = Var(model.ALLOCATION_POINTS, domain=Binary)
-    # Continuous variable: `h2_amount[p]` is the actual amount of H2 allocated to point `p`.
     model.h2_amount = Var(model.ALLOCATION_POINTS, domain=NonNegativeReals)
 
-    # --- 4. Objective Function ---
+    # --- 3. Objective Function ---
     def objective_rule(model):
         return sum(model.h2_amount[p] * model.margin[p] for p in model.ALLOCATION_POINTS)
 
     model.objective = Objective(rule=objective_rule, sense=maximize)
 
-    # --- 5. Constraints ---
-
-    # Constraint 1: Total H2 allocated must not exceed the total available H2.
+    # --- 4. Constraints ---
     def total_h2_constraint_rule(model):
         return sum(model.h2_amount[p] for p in model.ALLOCATION_POINTS) <= total_h2_generated
 
     model.total_h2_constraint = Constraint(rule=total_h2_constraint_rule)
 
-    # Constraint 2: Link `h2_amount` to `allocate` and enforce min/max bounds.
-    # If `allocate[p]` is 0, then `h2_amount[p]` must be 0.
-    # If `allocate[p]` is 1, then `h2_amount[p]` must be within its specified min and max limits.
-
-    # Minimum H2 allocation constraint: `h2_amount[p] >= min_h2_limit[p] * allocate[p]`
-    # If allocate[p] is 0, h2_amount[p] >= 0 (always true for NonNegativeReals)
-    # If allocate[p] is 1, h2_amount[p] >= min_h2_limit[p]
     def min_h2_allocation_rule(model, p):
         return model.h2_amount[p] >= model.min_h2_limit[p] * model.allocate[p]
 
     model.min_h2_allocation = Constraint(model.ALLOCATION_POINTS, rule=min_h2_allocation_rule)
 
-    # Maximum H2 allocation constraint: `h2_amount[p] <= max_h2_limit[p] * allocate[p]`
-    # If allocate[p] is 0, h2_amount[p] <= 0, forcing h2_amount[p] to be 0 (since it's NonNegative)
-    # If allocate[p] is 1, h2_amount[p] <= max_h2_limit[p]
     def max_h2_allocation_rule(model, p):
         return model.h2_amount[p] <= model.max_h2_limit[p] * model.allocate[p]
 
     model.max_h2_allocation = Constraint(model.ALLOCATION_POINTS, rule=max_h2_allocation_rule)
 
-    # Constraint 3: Mandatory allocations for 'pipeline', 'hcl', and 'h2o2'.
-    # These points must always be selected for allocation (`allocate[p]` must be 1).
     mandatory_points = ['pipeline', 'hcl', 'h2o2', 'flaker-1', 'flaker-2']
 
     def mandatory_allocation_rule(model, p):
         if p in mandatory_points:
             return model.allocate[p] == 1
-        return Constraint.Skip  # Skip this constraint for non-mandatory points
+        return Constraint.Skip
 
     model.mandatory_allocation = Constraint(model.ALLOCATION_POINTS, rule=mandatory_allocation_rule)
 
+    # --- 5. Special Disjunctive Constraint for flaker-3 and flaker-4 ---
+    BIG_M = 10_000
+
+    model.flaker_range_mode = Var(['flaker-3', 'flaker-4'], domain=Binary)
+
+    model.flaker_restricted_upper = ConstraintList()
+    model.flaker_exact_max_lower = ConstraintList()
+    model.flaker_exact_max_upper = ConstraintList()
+
+    for p in ['flaker-3', 'flaker-4']:
+        min_val = dummy_constraints[p]['min']
+        max_val = dummy_constraints[p]['max']
+
+        # If range_mode = 0 → h2_amount ≤ max - 1500
+        model.flaker_restricted_upper.add(
+            model.h2_amount[p] <= (max_val - 1500) + BIG_M * model.flaker_range_mode[p]
+        )
+
+        # If range_mode = 1 → h2_amount = max (enforced via lower and upper bounds)
+        model.flaker_exact_max_lower.add(
+            model.h2_amount[p] >= max_val - BIG_M * (1 - model.flaker_range_mode[p])
+        )
+        model.flaker_exact_max_upper.add(
+            model.h2_amount[p] <= max_val + BIG_M * (1 - model.flaker_range_mode[p])
+        )
+
+    # --- 6. Dual variables for sensitivity analysis (optional) ---
     model.dual = Suffix(direction=Suffix.IMPORT)
 
     return model

@@ -6,10 +6,19 @@ from optimizer.run_optimizer import trigger_optimizer_if_needed
 from utils.downloader import downloader_allocation, downloader_audit
 
 
+@st.dialog("New Recommendation Available")
+def optimizer_run_notification():
+    st.write("Optimizer ran. New Recommendation Available!")
+
+
 def common_dashboard_page():
     """Displays the common hydrogen allocation dashboard."""
     st.title("Hydrogen Allocation Dashboard (NM³/hr)")
     st.write(f"Logged in as: **{st.session_state.username}** (Role: **{st.session_state.selected_role}**)")
+
+    if st.session_state.optimizer_run:
+        optimizer_run_notification()
+        st.session_state.optimizer_run = False
 
     st.write("### Current Hydrogen Allocations:")
 
@@ -26,6 +35,10 @@ def common_dashboard_page():
     ])
 
     st.dataframe(df, use_container_width=True, hide_index=True)
+
+    total_df = pd.DataFrame([{'Current Flow (H2 in NM3/hr)': df["Allocated (NM³/hr)"].sum(),
+                              'Recommended Flow (H2 in NM3/hr)': df["Recommended (NM³/hr)"].sum()}])
+    st.dataframe(total_df, use_container_width=False, hide_index=True)
 
     st.write("---")
     st.write("### Operator Actions (Accept/Reject Recommendations):")
