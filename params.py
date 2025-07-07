@@ -50,33 +50,33 @@ HYDROGEN_ALLOCATION_DATA = {
 }
 
 entry_constraints_dummy = {
-    'Marketing': {'Demand - H2O2 (TPH)': {'min': 3.34, 'max': 3.34},
-                  'Demand - Flaker (TPH)': {'min': 20, 'max': 20}},
+    'Marketing': {'Demand - H2O2 (TPD)': {'min': 80, 'max': 80},
+                  'Demand - Flaker (TPD)': {'min': 400, 'max': 450}},
 
     'Finance': {'Pipeline': 20, 'Bank': 20, 'H2O2': 6, 'Flaker': 19, 'Boiler': 4, 'HCl': 0, 'Vent': 0},
 
     'Caustic Plant': {'Duration of pipeline demand change (hrs)': 0,
-                      'Total Caustic Production (TPH)': {'min': 0, 'max': 92.7},
+                      'Total Caustic Production (TPD)': {'min': 0, 'max': 2225},
                       'H2 generated (NM3) per ton of caustic': 280,
-                      'Total HCl Production (TPH)': {'min': 0, 'max': 18.75}, 'H2 required (NM3) per ton of HCl': 365},
+                      'Total HCl Production (TPD)': {'min': 0, 'max': 450}, 'H2 required (NM3) per ton of HCl': 365},
 
     'H2 Plant': {'Pipeline Compressor Capacity (NM3/hr)': {'min': 0, 'max': 12000},
                  'Bank Compressor Capacity (NM3/hr)': {'min': 0, 'max': 8000},
                  'Header Pressure Threshold (kgf/cm2)': {'min': 35, 'max': 125},
                  'Changeover time from pipeline to bank (hrs)': 0.1},
 
-    'H2O2 Plant': {'H2O2 Production Capacity (TPH)': {'min': 3.125, 'max': 6.25},
+    'H2O2 Plant': {'H2O2 Production Capacity (TPD)': {'min': 75, 'max': 150},
                    'H2 (NM3) required per ton of H2O2': 710,
                    'Load increase/decrease time for H2O2 (hrs)': 8},
 
-    'Flaker Plant': {'Flaker-1 Load Capacity (TPH)': {'min': 2.92, 'max': 4.17},
+    'Flaker Plant': {'Flaker-1 Load Capacity (TPD)': {'min': 70, 'max': 100},
                      'Flaker-1 H2 Specific Consumption (NM3/Ton)': 347, 'Flaker-1 NG Specific Consumption (SCM/Ton)': 0,
-                     'Flaker-2 Load Capacity (TPH)': {'min': 5.83, 'max': 8.33},
+                     'Flaker-2 Load Capacity (TPD)': {'min': 140, 'max': 200},
                      'Flaker-2 H2 Specific Consumption (NM3/Ton)': 230, 'Flaker-2 NG Specific Consumption (SCM/Ton)': 0,
-                     'Flaker-3 Load Capacity (TPH)': {'min': 8.75, 'max': 12.5},
+                     'Flaker-3 Load Capacity (TPD)': {'min': 200, 'max': 300},
                      'Flaker-3 H2 Specific Consumption (NM3/Ton)': 220,
                      'Flaker-3 NG Specific Consumption (SCM/Ton)': 67,
-                     'Flaker-4 Load Capacity (TPH)': {'min': 8.75, 'max': 12.5},
+                     'Flaker-4 Load Capacity (TPD)': {'min': 200, 'max': 300},
                      'Flaker-4 H2 Specific Consumption (NM3/Ton)': 220,
                      'Flaker-4 NG Specific Consumption (SCM/Ton)': 67,
                      'Flaker - Changeover time (NG to mix) (hrs)': 0.5, 'Flaker - H2 load inc/dec time (hrs)': 0.2
@@ -123,8 +123,8 @@ key_mapping = {
 def get_constraints():
     ROLE_CONSTRAINTS = {
         "Marketing": [
-            {"name": "Demand - H2O2 (TPH)", "type": "range"},
-            {"name": "Demand - Flaker (TPH)", "type": "range"}
+            {"name": "Demand - H2O2 (TPD)", "type": "range"},
+            {"name": "Demand - Flaker (TPD)", "type": "range"}
         ],
         "Finance": [
             {"name": "Pipeline", "type": "single"},
@@ -137,9 +137,9 @@ def get_constraints():
         ],
         "Caustic Plant": [
             {"name": "Duration of pipeline demand change (hrs)", "type": "single"},
-            {"name": "Total Caustic Production (TPH)", "type": "range"},
+            {"name": "Total Caustic Production (TPD)", "type": "range"},
             {"name": "H2 generated (NM3) per ton of caustic", "type": "single"},
-            {"name": "Total HCl Production (TPH)", "type": "range"},
+            {"name": "Total HCl Production (TPD)", "type": "range"},
             {"name": "H2 required (NM3) per ton of HCl", "type": "single"}
         ],
         "H2 Plant": [
@@ -149,7 +149,7 @@ def get_constraints():
             {"name": "Changeover time from pipeline to bank (hrs)", "type": "single"}
         ],
         "H2O2 Plant": [
-            {"name": "H2O2 Production Capacity (TPH)", "type": "range"},
+            {"name": "H2O2 Production Capacity (TPD)", "type": "range"},
             {"name": "H2 (NM3) required per ton of H2O2", "type": "single"},
             {"name": "Load increase/decrease time for H2O2 (hrs)", "type": "single"}
         ],
@@ -167,7 +167,7 @@ def get_constraints():
     flaker_constraints = []
     for i in range(1, 5):
         flaker_constraints.extend([
-            {"name": f"Flaker-{i} Load Capacity (TPH)", "type": "range"},
+            {"name": f"Flaker-{i} Load Capacity (TPD)", "type": "range"},
             {"name": f"Flaker-{i} H2 Specific Consumption (NM3/Ton)", "type": "single"},
             {"name": f"Flaker-{i} NG Specific Consumption (SCM/Ton)", "type": "single"},
         ])

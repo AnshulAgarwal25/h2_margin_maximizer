@@ -24,6 +24,15 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 initialize_db(ROLES, get_constraints(), list(HYDROGEN_ALLOCATION_DATA.keys()))
 
 # --- Session State Initialization ---
+
+# Initialize constraint_values as an empty dict to be populated on role selection
+if "constraint_values" not in st.session_state:
+    st.session_state.constraint_values = {}
+
+# --- OPTIMIZER TRIGGERING START ---
+if "last_run_constraints" not in st.session_state:
+    last_run_constraints_trigger_run()
+
 if "initial_db_setup_done" not in st.session_state:
     initial_db_trigger()
 if "authenticated" not in st.session_state:
@@ -38,14 +47,6 @@ if "current_page" not in st.session_state:
 # Load initial dashboard data from the database
 if "dashboard_data" not in st.session_state:
     st.session_state.dashboard_data = load_latest_allocation_data(HYDROGEN_ALLOCATION_DATA)
-
-# Initialize constraint_values as an empty dict to be populated on role selection
-if "constraint_values" not in st.session_state:
-    st.session_state.constraint_values = {}
-
-# --- OPTIMIZER TRIGGERING START ---
-if "last_run_constraints" not in st.session_state:
-    last_run_constraints_trigger_run()
 
 # Flag to indicate if optimizer should run due to button click
 if "run_optimizer_button_clicked" not in st.session_state:

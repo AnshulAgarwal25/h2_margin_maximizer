@@ -148,9 +148,11 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
     if 'H2O2 Plant' in st.session_state.constraint_values.keys():
         duration_threshold = \
             st.session_state.constraint_values['H2O2 Plant']['Load increase/decrease time for H2O2 (hrs)']
-    else:
+    elif 'H2O2 Plant' in st.session_state.last_run_constraints.keys():
         duration_threshold = \
             st.session_state.last_run_constraints['H2O2 Plant']['Load increase/decrease time for H2O2 (hrs)']
+    else:
+        duration_threshold = 8
 
     if duration > duration_threshold:
         effective_contribution_margin['H2O2'] += 1_000_000  # A large number to ensure priority

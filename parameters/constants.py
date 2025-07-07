@@ -101,4 +101,5 @@ column_name_mapping = {
     'FC621Y.PV': 'CL2_FLOW_TO_HCL_FURNACE_4',
     '4FIC621A.PV': 'CL2_FLOW_TO_HCL_FURNACE_5',
     '4FIC621B.PV': 'CL2_FLOW_TO_HCL_FURNACE_6',
+    'H2PIPE_DMD_DEC_HR': 'pipeline_disruption_hrs',
 }

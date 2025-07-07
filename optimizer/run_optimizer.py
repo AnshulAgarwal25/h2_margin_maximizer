@@ -109,13 +109,13 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
 
         'bank': {'min': 0, 'max': dcs_constraints['bank_available']},
 
-        'h2o2': {'min': max(constraints['H2O2 Plant']['H2O2 Production Capacity (TPH)']['min'] *
+        'h2o2': {'min': max((constraints['H2O2 Plant']['H2O2 Production Capacity (TPD)']['min'] / 24) *
                             constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'],
 
                             dcs_constraints['h2o2_h2_flow']),
                  'max': min(dcs_constraints['h2o2_h2_flow'],
 
-                            constraints['Marketing']['Demand - H2O2 (TPH)']['max'] *
+                            (constraints['Marketing']['Demand - H2O2 (TPD)']['max'] / 24) *
                             constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'])},
 
         # 'flaker-1': {'min': min(dcs_constraints['flaker-1_load'] *
@@ -188,24 +188,24 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
     # getting h2o2 min to min production possible when duration change condition is met and \
     # header pressure breach is observed
     if (dcs_constraints['header_pressure'] >= constraints['H2 Plant']['Header Pressure Threshold (kgf/cm2)']['max'] and
-            constraints['Caustic Plant']['Duration of pipeline demand change (hrs)'] >= constraints['H2O2 Plant'][
+            dcs_constraints['pipeline_disruption_hrs'] >= constraints['H2O2 Plant'][
                 'Load increase/decrease time for H2O2 (hrs)']):
-        final_constraints['h2o2']['min'] = constraints['H2O2 Plant']['H2O2 Production Capacity (TPH)']['min'] * \
-                                           constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2']
+        # final_constraints['h2o2']['min'] = (constraints['H2O2 Plant']['H2O2 Production Capacity (TPD)']['min'] / 24) * \
+        #                                    constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2']
+        final_constraints['h2o2']['max'] = min(
+            (constraints['H2O2 Plant']['H2O2 Production Capacity (TPD)']['max'] / 24) *
+            constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'],
 
-        final_constraints['h2o2']['max'] = min(constraints['H2O2 Plant']['H2O2 Production Capacity (TPH)']['max'] *
-                                               constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'],
-
-                                               constraints['Marketing']['Demand - H2O2 (TPH)']['max'] *
-                                               constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'])
+            (constraints['Marketing']['Demand - H2O2 (TPD)']['max'] / 24) *
+            constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'])
 
     # getting h2o2 min to min production possible when duration change condition is met and \
     # header pressure breach is observed
     if (dcs_constraints['header_pressure'] <= constraints['H2 Plant']['Header Pressure Threshold (kgf/cm2)'][
         'min'] and
-            constraints['Caustic Plant']['Duration of pipeline demand change (hrs)'] >= constraints['H2O2 Plant'][
+            dcs_constraints['pipeline_disruption_hrs'] >= constraints['H2O2 Plant'][
                 'Load increase/decrease time for H2O2 (hrs)']):
-        final_constraints['h2o2']['min'] = constraints['H2O2 Plant']['H2O2 Production Capacity (TPH)']['min'] * \
+        final_constraints['h2o2']['min'] = (constraints['H2O2 Plant']['H2O2 Production Capacity (TPD)']['min'] / 24) * \
                                            constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2']
 
     return final_constraints, prices
@@ -236,9 +236,8 @@ def generate_hydrogen_recommendations(dcs_constraints, current_flow):
 
     # --- Optimization Logic ---
 
-    if 'Caustic Plant' in all_latest_constraints and 'Duration of pipeline demand change (hrs)' in \
-            all_latest_constraints['Caustic Plant']:
-        duration = all_latest_constraints['Caustic Plant']['Duration of pipeline demand change (hrs)']
+    if 'pipeline_disruption_hrs' in dcs_constraints:
+        duration = dcs_constraints['pipeline_disruption_hrs']
     else:
         # Default duration or handle error if constraint is not found.
         duration = 0.5
