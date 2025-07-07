@@ -39,6 +39,7 @@ def common_dashboard_page():
     total_df = pd.DataFrame([{'Current Flow (H2 in NM3/hr)': df["Allocated (NM³/hr)"].sum(),
                               'Recommended Flow (H2 in NM3/hr)': df["Recommended (NM³/hr)"].sum()}])
     st.dataframe(total_df, use_container_width=False, hide_index=True)
+    st.write(f'Duration of Disruption: {st.session_state.duration}')
 
     st.write("---")
     st.write("### Operator Actions (Accept/Reject Recommendations):")

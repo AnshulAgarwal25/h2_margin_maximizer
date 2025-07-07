@@ -29,6 +29,9 @@ initialize_db(ROLES, get_constraints(), list(HYDROGEN_ALLOCATION_DATA.keys()))
 if "constraint_values" not in st.session_state:
     st.session_state.constraint_values = {}
 
+if "duration" not in st.session_state:
+    st.session_state.duration = 0
+
 # --- OPTIMIZER TRIGGERING START ---
 if "last_run_constraints" not in st.session_state:
     last_run_constraints_trigger_run()
@@ -85,7 +88,7 @@ def main():
         common_dashboard_page()
 
 
-refresh_interval_ms = 5 * 60 * 1000  # 3 minutes in milliseconds
+refresh_interval_ms = 4 * 60 * 1000  # 3 minutes in milliseconds
 st_autorefresh(interval=refresh_interval_ms, key="autorefresh_timer")
 print(f"---Refreshed---{datetime.fromtimestamp(time.time()).strftime('%d-%m-%Y %H:%M:%S')}")
 main()

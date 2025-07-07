@@ -282,6 +282,7 @@ def generate_hydrogen_recommendations(dcs_constraints, current_flow):
 
     current_recommendations = copy.deepcopy(allocation_details)
     st.session_state.optimizer_run = True
+    st.session_state.duration = duration
     return current_recommendations
 
 
