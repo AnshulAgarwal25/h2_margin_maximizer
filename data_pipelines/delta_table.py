@@ -102,7 +102,14 @@ def populate_latest_dcs_constraints():
         "h2o2_h2_flow": data['H2O2_H2_current_NM3_per_hr'].values[0],
         "flaker-1_h2_flow": data['Flaker_450tpd_running_or_not_binary'].values[0],
         "flaker-2_h2_flow": data['Flaker_600tpd_running_or_not_binary'].values[0],
-        "pipeline_disruption_hrs": data['pipeline_disruption_hrs'].values[0]
+        "pipeline_disruption_hrs": data['pipeline_disruption_hrs'].values[0],
+        "total_h2_flow": (pipeline_flow + h2_in_hcl + ech_flow + data['Flaker_450tpd_running_or_not_binary'].values[0] +
+                          data['Flaker_600tpd_running_or_not_binary'].values[0] +
+                          data['Flaker_850tpd_running_or_not_binary_1'].values[0] +
+                          data['Flaker_850tpd_running_or_not_binary_2'].values[0] +
+                          data['H2O2_H2_current_NM3_per_hr'].values[0] +
+                          data['Boiler_P60_current_H2_NM3_per_hr'].values[0] +
+                          data['Boiler_P120_current_H2_NM3_per_hr'].values[0])
     }
 
     current_flow = {

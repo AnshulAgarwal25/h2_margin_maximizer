@@ -153,7 +153,7 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
                                 constraints['Flaker Plant']['Flaker-3 H2 Specific Consumption (NM3/Ton)'],
 
                                 dcs_constraints['850tpd_caustic'] *
-                                constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic'])},
+                                constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic']) - 1100},
 
         'flaker-4': {'min': 750,
                      'max': min(dcs_constraints['flaker-4_load'] *

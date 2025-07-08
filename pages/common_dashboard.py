@@ -11,6 +11,37 @@ def optimizer_run_notification():
     st.write("Optimizer ran. New Recommendation Available!")
 
 
+def modify_allocation_display(dashboard_data):
+    if "Flaker - 3" in dashboard_data and "Flaker - 4" in dashboard_data:
+        merged_area = "Flaker - 3 and 4"
+        flaker_3 = dashboard_data["Flaker - 3"]
+        flaker_4 = dashboard_data["Flaker - 4"]
+
+        dashboard_data[merged_area] = {
+            "allocated": flaker_3["allocated"] + flaker_4["allocated"],
+            "recommended": flaker_3["recommended"] + flaker_4["recommended"],
+            "status": flaker_3["status"],
+            "comment": flaker_3["comment"],
+            "min_constrained": flaker_3["min_constrained"] + flaker_4["min_constrained"],
+            "max_constrained": flaker_3["max_constrained"] + flaker_4["max_constrained"]
+        }
+
+        del dashboard_data["Flaker - 3"]
+        del dashboard_data["Flaker - 4"]
+
+    items = list(dashboard_data.items())
+
+    # Extract and remove merged row
+    merged_item = next(((i, item) for i, item in enumerate(items) if item[0] == "Flaker - 3 and 4"), None)
+    if merged_item:
+        idx, flaker_row = merged_item
+        items.pop(idx)
+        insert_pos = min(5, len(items))  # Ensure we don't exceed length
+        items.insert(insert_pos, flaker_row)
+
+    return items
+
+
 def common_dashboard_page():
     """Displays the common hydrogen allocation dashboard."""
     st.title("Hydrogen Allocation Dashboard (NM³/hr)")
@@ -22,6 +53,7 @@ def common_dashboard_page():
 
     st.write("### Current Hydrogen Allocations:")
 
+    dashboard_data = modify_allocation_display(st.session_state.dashboard_data)
     # Convert dashboard data to a DataFrame for easy display
     df = pd.DataFrame([
         {"Area": area,
@@ -31,10 +63,21 @@ def common_dashboard_page():
          "Comments": data["comment"],
          "Min (Constrained)": data['min_constrained'],
          "Max (Constrained)": data['max_constrained']}
-        for area, data in st.session_state.dashboard_data.items()
+        for area, data in dashboard_data
     ])
 
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    # st.dataframe(df, use_container_width=True, hide_index=True)
+    def highlight_if_under_allocated(row):
+        if row["Area"] == "Vent":
+            return [''] * len(row)
+        elif row["Allocated (NM³/hr)"] < row["Recommended (NM³/hr)"]:
+            return ['background-color: yellow'] * len(row)
+        else:
+            return [''] * len(row)
+
+    numeric_cols = ["Allocated (NM³/hr)", "Recommended (NM³/hr)", "Min (Constrained)", "Max (Constrained)"]
+    styled_df = df.style.apply(highlight_if_under_allocated, axis=1).format({col: "{:.2f}" for col in numeric_cols})
+    st.write(styled_df)
 
     total_df = pd.DataFrame([{'Current Flow (H2 in NM3/hr)': df["Allocated (NM³/hr)"].sum(),
                               'Recommended Flow (H2 in NM3/hr)': df["Recommended (NM³/hr)"].sum()}])
