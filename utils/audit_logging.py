@@ -1,5 +1,8 @@
 import datetime
+
 import pandas as pd
+import pytz
+
 from params import *
 
 AUDIT_LOG_PATH = os.path.join(DATA_DIR, "audit_log.csv")
@@ -20,7 +23,8 @@ def save_audit_log(df):
 def log_audit_entry(user, role, parameter, old_value, new_value, comments=""):
     """Adds an entry to the audit log."""
     audit_df = load_audit_log()
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ist = pytz.timezone('Asia/Kolkata')
+    timestamp = datetime.datetime.now(ist).strftime("%Y-%m-%d %H:%M:%S")
     new_entry = pd.DataFrame([{
         "timestamp": timestamp,
         "user": user,

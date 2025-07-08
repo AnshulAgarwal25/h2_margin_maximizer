@@ -244,7 +244,7 @@ def generate_hydrogen_recommendations(dcs_constraints, current_flow):
         st.warning("Duration constraint for Caustic Plant not found. Using default duration of 30 min.")
 
     final_constraints, prices = get_final_constraint_values(all_latest_constraints, dcs_constraints)
-    solution = solve_h2_optimizer(duration, final_constraints, prices, all_latest_constraints)
+    solution = solve_h2_optimizer(duration, final_constraints, prices, all_latest_constraints, dcs_constraints)
 
     allocation_details = HYDROGEN_ALLOCATION_DATA
 

@@ -3,6 +3,7 @@ import json
 import sqlite3
 
 import pandas as pd
+import pytz
 
 # --- Database Configuration ---
 DB_FILE = 'hydrogen_allocation_tool.db'  # SQLite database file
@@ -300,7 +301,8 @@ def save_constraints(role_name, current_constraint_values, constraints_schema):
         conn.close()
         return  # Exit if table does not exist
 
-    timestamp_key = datetime.datetime.now().isoformat(timespec='milliseconds')
+    ist = pytz.timezone('Asia/Kolkata')
+    timestamp_key = datetime.datetime.now(ist).isoformat(timespec='milliseconds')
 
     columns = ["timestamp"]
     values = [timestamp_key]
@@ -349,7 +351,8 @@ def save_allocation_data(allocation_data):
     cursor = conn.cursor()
     table_name = "allocations"
 
-    timestamp_key = datetime.datetime.now().isoformat(timespec='milliseconds')
+    ist = pytz.timezone('Asia/Kolkata')
+    timestamp_key = datetime.datetime.now(ist).isoformat(timespec='milliseconds')
 
     columns = ["timestamp"]
     values = [timestamp_key]
@@ -397,7 +400,9 @@ def save_optimizer_last_run_constraints(constraints_snapshot):
     cursor = conn.cursor()
     table_name = "optimizer_state"
     constraints_json = json.dumps(constraints_snapshot)
-    last_updated = datetime.datetime.now().isoformat()
+
+    ist = pytz.timezone('Asia/Kolkata')
+    last_updated = datetime.datetime.now(ist).isoformat(timespec='milliseconds')
 
     update_sql = f"""
     INSERT OR REPLACE INTO {table_name} (id, last_run_constraints_json, last_updated)
