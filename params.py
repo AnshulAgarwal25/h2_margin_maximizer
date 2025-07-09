@@ -26,9 +26,9 @@ ROLES = [
 # Dummy hydrogen allocation data
 HYDROGEN_ALLOCATION_DATA = {
     "Pipeline": {"allocated": 8800, "recommended": 8750, "status": "accepted", "comment": "", "min_constrained": 0,
-                 "max_constrained": 1200},
+                 "max_constrained": 12000},
     "Bank": {"allocated": 0, "recommended": 0, "status": "accepted", "comment": "", "min_constrained": 0,
-             "max_constrained": 1200},
+             "max_constrained": 10000},
     "HCL": {"allocated": 18.75, "recommended": 18.75, "status": "accepted", "comment": "", "min_constrained": 0,
             "max_constrained": 1200},
     "Flaker - 1": {"allocated": 0, "recommended": 0, "status": "accepted", "comment": "", "min_constrained": 0,
