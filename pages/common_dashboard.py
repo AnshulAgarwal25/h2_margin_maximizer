@@ -70,7 +70,7 @@ def common_dashboard_page():
     def highlight_if_under_allocated(row):
         if row["Area"] == "Vent":
             return [''] * len(row)
-        elif row["Allocated (NM³/hr)"] < row["Recommended (NM³/hr)"]:
+        elif row["Allocated (NM³/hr)"] + 1 < row["Recommended (NM³/hr)"]:
             return ['background-color: yellow'] * len(row)
         else:
             return [''] * len(row)
