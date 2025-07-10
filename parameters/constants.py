@@ -11,8 +11,8 @@ column_name_mapping = {
     "03FI8501_B.PV": "Flaker_850tpd_running_or_not_binary_2",
     "100FLAKER_PROD.CPV": "Flaker_450tpd_current_load_TPH",
     "200FLAKER_PROD.CPV": "Flaker_600tpd_current_load_TPH",
-    "03_B_MODE_LOAD": "Flaker_850tpd_current_load_TPH_1",
-    "03_C_MODE_LOAD": "Flaker_850tpd_current_load_TPH_2",
+    "02BC_MODE_LOAD.CPV": "Flaker_850tpd_current_load_TPH_1",  # changed to get correct value
+    "03BC_MODE_LOAD.CPV": "Flaker_850tpd_current_load_TPH_2",  # changed to get correct value
     "FI615X.PV": "Boiler_P60_current_H2_NM3_per_hr",
     "GF1WT1_PV": "Boiler_P60_current_coal_TPH_1",
     "GF2WT1_PV": "Boiler_P60_current_coal_TPH_2",

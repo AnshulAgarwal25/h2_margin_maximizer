@@ -118,33 +118,6 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
                             (constraints['Marketing']['Demand - H2O2 (TPD)']['max'] / 24) *
                             constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'])},
 
-        # 'flaker-1': {'min': min(dcs_constraints['flaker-1_load'] *
-        #                         constraints['Flaker Plant']['Flaker-1 H2 Specific Consumption (NM3/Ton)'],
-        #
-        #                         (dcs_constraints['450tpd_caustic'] + dcs_constraints['600tpd_caustic']) *
-        #                         constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic']
-        #                         ),
-        #
-        #              'max': min(dcs_constraints['flaker-1_load'] *
-        #                         constraints['Flaker Plant']['Flaker-1 H2 Specific Consumption (NM3/Ton)'],
-        #
-        #                         (dcs_constraints['450tpd_caustic'] + dcs_constraints['600tpd_caustic']) *
-        #                         constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic']
-        #                         )},
-        #
-        # 'flaker-2': {'min': min(dcs_constraints['flaker-2_load'] *
-        #                         constraints['Flaker Plant']['Flaker-2 H2 Specific Consumption (NM3/Ton)'],
-        #
-        #                         (dcs_constraints['450tpd_caustic'] + dcs_constraints['600tpd_caustic']) *
-        #                         constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic']
-        #                         ),
-        #
-        #              'max': min(dcs_constraints['flaker-2_load'] *
-        #                         constraints['Flaker Plant']['Flaker-2 H2 Specific Consumption (NM3/Ton)'],
-        #
-        #                         (dcs_constraints['450tpd_caustic'] + dcs_constraints['600tpd_caustic']) *
-        #                         constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic']
-        #                         )},
         'flaker-1': {'min': dcs_constraints['flaker-1_h2_flow'], 'max': dcs_constraints['flaker-1_h2_flow']},
         'flaker-2': {'min': dcs_constraints['flaker-2_h2_flow'], 'max': dcs_constraints['flaker-2_h2_flow']},
 
