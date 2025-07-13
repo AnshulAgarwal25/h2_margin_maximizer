@@ -22,7 +22,7 @@ def modify_allocation_display(dashboard_data):
             "recommended": flaker_3["recommended"] + flaker_4["recommended"],
             "status": flaker_3["status"],
             "comment": flaker_3["comment"],
-            "min_constrained": flaker_3["min_constrained"] + flaker_4["min_constrained"],
+            "min_constrained": flaker_3["min_constrained"],
             "max_constrained": flaker_3["max_constrained"] + flaker_4["max_constrained"]
         }
 

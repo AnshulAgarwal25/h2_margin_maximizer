@@ -90,6 +90,11 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
     model.max_h2_allocation = Constraint(model.ALLOCATION_POINTS, rule=max_h2_allocation_rule)
 
     mandatory_points = ['pipeline', 'hcl', 'h2o2', 'flaker-1', 'flaker-2']
+    if final_constraints['flaker-3']['min'] > 750:
+        mandatory_points.append('flaker-3')
+
+    if final_constraints['flaker-4']['min'] > 750:
+        mandatory_points.append('flaker-4')
 
     def mandatory_allocation_rule(model, p):
         if p in mandatory_points:

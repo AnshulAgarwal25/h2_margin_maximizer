@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     libglpk-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the requirements file into the working directory
+# Copy the requirements file into the   working directory
 COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt

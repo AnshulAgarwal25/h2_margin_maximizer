@@ -163,8 +163,6 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
     if (dcs_constraints['header_pressure'] >= constraints['H2 Plant']['Header Pressure Threshold (kgf/cm2)']['max'] and
             dcs_constraints['pipeline_disruption_hrs'] >= constraints['H2O2 Plant'][
                 'Load increase/decrease time for H2O2 (hrs)']):
-        # final_constraints['h2o2']['min'] = (constraints['H2O2 Plant']['H2O2 Production Capacity (TPD)']['min'] / 24) * \
-        #                                    constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2']
         final_constraints['h2o2']['max'] = min(
             (constraints['H2O2 Plant']['H2O2 Production Capacity (TPD)']['max'] / 24) *
             constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2'],
@@ -180,6 +178,14 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
                 'Load increase/decrease time for H2O2 (hrs)']):
         final_constraints['h2o2']['min'] = (constraints['H2O2 Plant']['H2O2 Production Capacity (TPD)']['min'] / 24) * \
                                            constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2']
+
+    # if duration < 1hr, then cant change flaker 3 & 4 flow
+    if dcs_constraints['pipeline_disruption_hrs'] < 1:
+        final_constraints['flaker-3']['min'] = dcs_constraints['Flaker_850tpd_running_or_not_binary_1']
+        final_constraints['flaker-3']['max'] = dcs_constraints['Flaker_850tpd_running_or_not_binary_1']
+
+        final_constraints['flaker-4']['min'] = dcs_constraints['Flaker_850tpd_running_or_not_binary_2']
+        final_constraints['flaker-4']['max'] = dcs_constraints['Flaker_850tpd_running_or_not_binary_2']
 
     return final_constraints, prices
 
