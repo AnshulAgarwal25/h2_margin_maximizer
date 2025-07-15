@@ -23,7 +23,8 @@ def modify_allocation_display(dashboard_data):
             "status": flaker_3["status"],
             "comment": flaker_3["comment"],
             "min_constrained": flaker_3["min_constrained"],
-            "max_constrained": flaker_3["max_constrained"] + flaker_4["max_constrained"]
+            "max_constrained": flaker_3["max_constrained"] + flaker_4["max_constrained"],
+            "margin_per_unit": flaker_3["margin_per_unit"]
         }
 
         del dashboard_data["Flaker - 3"]
@@ -54,6 +55,7 @@ def common_dashboard_page():
     st.write("### Current Hydrogen Allocations:")
 
     dashboard_data = modify_allocation_display(st.session_state.dashboard_data)
+
     # Convert dashboard data to a DataFrame for easy display
     df = pd.DataFrame([
         {"Area": area,
@@ -62,7 +64,9 @@ def common_dashboard_page():
          "Status": data["status"],
          "Comments": data["comment"],
          "Min (Constrained)": data['min_constrained'],
-         "Max (Constrained)": data['max_constrained']}
+         "Max (Constrained)": data['max_constrained'],
+         "Margin per Unit (NM3)": data['margin_per_unit'],
+         }
         for area, data in dashboard_data
     ])
 
@@ -79,9 +83,25 @@ def common_dashboard_page():
     styled_df = df.style.apply(highlight_if_under_allocated, axis=1).format({col: "{:.2f}" for col in numeric_cols})
     st.write(styled_df)
 
-    total_df = pd.DataFrame([{'Current Flow (H2 in NM3/hr)': df["Allocated (NM³/hr)"].sum(),
-                              'Recommended Flow (H2 in NM3/hr)': df["Recommended (NM³/hr)"].sum()}])
-    st.dataframe(total_df, use_container_width=False, hide_index=True)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        total_df = pd.DataFrame([{'Current Flow (H2 in NM3/hr)': df["Allocated (NM³/hr)"].sum(),
+                                  'Recommended Flow (H2 in NM3/hr)': df["Recommended (NM³/hr)"].sum()}])
+        st.dataframe(total_df, use_container_width=False, hide_index=True)
+
+    with col2:
+        # show value comparison
+        current_flow_value = (df["Allocated (NM³/hr)"] * df["Margin per Unit (NM3)"]).sum()
+        recommended_flow_value = (df["Recommended (NM³/hr)"] * df["Margin per Unit (NM3)"]).sum()
+        total_value_df = pd.DataFrame(
+            [{
+                'Current Flow - Value (Rs)': current_flow_value,
+                'Recommended Flow - Value (Rs)': recommended_flow_value,
+                'Difference - (Rs)': recommended_flow_value - current_flow_value
+            }])
+        st.dataframe(total_value_df, use_container_width=False, hide_index=True)
+
     st.write(f'Duration of Disruption: {st.session_state.duration}')
 
     st.write("---")

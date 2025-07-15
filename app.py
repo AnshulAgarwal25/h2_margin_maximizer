@@ -23,6 +23,12 @@ st.set_page_config(layout="wide", page_title="Hydrogen Allocation Tool",
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 initialize_db(ROLES, get_constraints(), list(HYDROGEN_ALLOCATION_DATA.keys()))
 
+# if "constraint_values" not in st.session_state:
+#     st.session_state.constraint_values = {}
+#
+# if "last_run_constraints" not in st.session_state:
+#     st.session_state.last_run_constraints = {}
+
 # --- Session State Initialization ---
 if "initial_db_setup_done" not in st.session_state:
     initial_db_trigger()
@@ -35,6 +41,10 @@ if "selected_role" not in st.session_state:
 if "current_page" not in st.session_state:
     st.session_state.current_page = "auth"
 
+# Initialize constraint_values as an empty dict to be populated on role selection
+if "constraint_values" not in st.session_state:
+    st.session_state.constraint_values = {}
+
 # Load initial dashboard data from the database
 if "dashboard_data" not in st.session_state:
     st.session_state.dashboard_data = load_latest_allocation_data(HYDROGEN_ALLOCATION_DATA)
@@ -45,10 +55,6 @@ if "run_optimizer_button_clicked" not in st.session_state:
 
 if "optimizer_run" not in st.session_state:
     st.session_state.optimizer_run = False
-
-# Initialize constraint_values as an empty dict to be populated on role selection
-if "constraint_values" not in st.session_state:
-    st.session_state.constraint_values = {}
 
 if "duration" not in st.session_state:
     st.session_state.duration = 0

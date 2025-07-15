@@ -88,9 +88,11 @@ def create_allocation_table(allocation_areas):
         f'"{area.replace(" ", "_").replace("-", "_")}_status" TEXT, "{area.replace(" ", "_").replace("-", "_")}_comment" TEXT'
         for area in allocation_areas])
 
-    # Build columns for min and max constraints
+    # Build columns for min and max constraints & margin per unit
     constraints_columns_sql = ", ".join([
-        f'"{area.replace(" ", "_").replace("-", "_")}_min_constrained" REAL, "{area.replace(" ", "_").replace("-", "_")}_max_constrained" REAL'
+        f'"{area.replace(" ", "_").replace("-", "_")}_min_constrained" REAL, \
+        "{area.replace(" ", "_").replace("-", "_")}_max_constrained" REAL, \
+        "{area.replace(" ", "_").replace("-", "_")}_margin_per_unit" REAL'
         for area in allocation_areas])
 
     create_table_sql = f"""
@@ -251,6 +253,8 @@ def load_latest_allocation_data(allocation_data_schema):
                         f"{area_clean}_min_constrained"] if f"{area_clean}_min_constrained" in row.keys() else 0,
                     "max_constrained": row[
                         f"{area_clean}_max_constrained"] if f"{area_clean}_max_constrained" in row.keys() else 0,
+                    "margin_per_unit": row[
+                        f"{area_clean}_margin_per_unit"] if f"{area_clean}_margin_per_unit" in row.keys() else 0,
                 }
             return latest_data
         else:
@@ -366,6 +370,7 @@ def save_allocation_data(allocation_data):
         columns.append(f'"{area_clean}_comment"')
         columns.append(f'"{area_clean}_min_constrained"')
         columns.append(f'"{area_clean}_max_constrained"')
+        columns.append(f'"{area_clean}_margin_per_unit"')
 
         values.append(data.get("allocated", 0))
         values.append(data.get("recommended", 0))
@@ -373,8 +378,9 @@ def save_allocation_data(allocation_data):
         values.append(data.get("comment", ""))
         values.append(data.get("min_constrained", 0))
         values.append(data.get("max_constrained", 0))
+        values.append(data.get("margin_per_unit", 0))
 
-        placeholders.extend(["?", "?", "?", "?", "?", "?"])
+        placeholders.extend(["?", "?", "?", "?", "?", "?", "?"])
 
     columns_sql = ", ".join(columns)
     placeholders_sql = ", ".join(placeholders)

@@ -23,20 +23,6 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
     dummy_constraints = final_constraints
     contribution_margin_base = prices
 
-    allocation_to_margin_category = {
-        'pipeline': 'Pipeline',
-        'hcl': 'HCl',
-        'bank': 'Bank',
-        'h2o2': 'H2O2',
-        'flaker-1': 'Flaker',
-        'flaker-2': 'Flaker',
-        'flaker-3': 'Flaker',
-        'flaker-4': 'Flaker',
-        'boiler_p60': 'Boiler',
-        'boiler_p120': 'Boiler',
-        'vent': 'Vent'
-    }
-
     # Determine effective contribution margins, applying priority for H2O2 if duration > 3
     effective_contribution_margin = contribution_margin_base.copy()
 

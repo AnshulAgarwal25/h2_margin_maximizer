@@ -23,9 +23,11 @@ def check_header_pressure():
     if 'H2 Plant' in st.session_state.constraint_values.keys():
         header_pressure_threshold = \
             st.session_state.constraint_values['H2 Plant']['Header Pressure Threshold (kgf/cm2)']['max']
-    else:
+    elif 'H2 Plant' in st.session_state.last_run_constraints:
         header_pressure_threshold = \
             st.session_state.last_run_constraints['H2 Plant']['Header Pressure Threshold (kgf/cm2)']['max']
+    else:
+        header_pressure_threshold = 135
     return header_pressure > header_pressure_threshold, dcs_constraints, current_flow
 
 
@@ -180,12 +182,14 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
                                            constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2']
 
     # if duration < 1hr, then cant change flaker 3 & 4 flow
-    if dcs_constraints['pipeline_disruption_hrs'] < 1:
-        final_constraints['flaker-3']['min'] = dcs_constraints['Flaker_850tpd_running_or_not_binary_1']
-        final_constraints['flaker-3']['max'] = dcs_constraints['Flaker_850tpd_running_or_not_binary_1']
+    if (dcs_constraints['header_pressure'] >= constraints['H2 Plant']['Header Pressure Threshold (kgf/cm2)']['max'] and
+            dcs_constraints['pipeline_disruption_hrs'] < constraints['Flaker Plant'][
+                'Flaker - Changeover time (NG to mix) (hrs)']):
+        final_constraints['flaker-3']['min'] = dcs_constraints['flaker-3_h2_flow']
+        final_constraints['flaker-3']['max'] = dcs_constraints['flaker-3_h2_flow']
 
-        final_constraints['flaker-4']['min'] = dcs_constraints['Flaker_850tpd_running_or_not_binary_2']
-        final_constraints['flaker-4']['max'] = dcs_constraints['Flaker_850tpd_running_or_not_binary_2']
+        final_constraints['flaker-4']['min'] = dcs_constraints['flaker-4_h2_flow']
+        final_constraints['flaker-4']['max'] = dcs_constraints['flaker-4_h2_flow']
 
     return final_constraints, prices
 
@@ -239,6 +243,7 @@ def generate_hydrogen_recommendations(dcs_constraints, current_flow):
                     allocation_details[display_name]["comment"] = ""  # Clear comments
                     allocation_details[display_name]["min_constrained"] = final_constraints[internal_key]['min']
                     allocation_details[display_name]["max_constrained"] = final_constraints[internal_key]['max']
+                    allocation_details[display_name]['margin_per_unit'] = details['margin_per_unit']
                 else:
                     print(
                         f"Warning: Display name '{display_name}' "
@@ -258,6 +263,8 @@ def generate_hydrogen_recommendations(dcs_constraints, current_flow):
             allocation_details[area]["comment"] = "."
             allocation_details[area]["min_constrained"] = final_constraints[key_mapping.get(area)]['min']
             allocation_details[area]["max_constrained"] = final_constraints[key_mapping.get(area)]['max']
+            allocation_details[area]['margin_per_unit'] = prices[
+                allocation_to_margin_category.get(key_mapping.get(area))]
 
     current_recommendations = copy.deepcopy(allocation_details)
     st.session_state.optimizer_run = True
