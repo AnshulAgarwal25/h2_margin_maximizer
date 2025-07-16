@@ -79,7 +79,8 @@ def common_dashboard_page():
         else:
             return [''] * len(row)
 
-    numeric_cols = ["Allocated (NM³/hr)", "Recommended (NM³/hr)", "Min (Constrained)", "Max (Constrained)"]
+    numeric_cols = ["Allocated (NM³/hr)", "Recommended (NM³/hr)", "Min (Constrained)", "Max (Constrained)",
+                    "Margin per Unit (NM3)"]
     styled_df = df.style.apply(highlight_if_under_allocated, axis=1).format({col: "{:.2f}" for col in numeric_cols})
     st.write(styled_df)
 
@@ -92,8 +93,8 @@ def common_dashboard_page():
 
     with col2:
         # show value comparison
-        current_flow_value = (df["Allocated (NM³/hr)"] * df["Margin per Unit (NM3)"]).sum()
-        recommended_flow_value = (df["Recommended (NM³/hr)"] * df["Margin per Unit (NM3)"]).sum()
+        current_flow_value = round((df["Allocated (NM³/hr)"] * df["Margin per Unit (NM3)"]).sum(), 2)
+        recommended_flow_value = round((df["Recommended (NM³/hr)"] * df["Margin per Unit (NM3)"]).sum(), 2)
         total_value_df = pd.DataFrame(
             [{
                 'Current Flow - Value (Rs)': current_flow_value,
