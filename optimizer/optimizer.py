@@ -1,5 +1,3 @@
-import tempfile
-
 import streamlit as st
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
@@ -151,9 +149,7 @@ def solve_h2_optimizer(duration, final_constraints, prices,
     # Initialize the CBC solver. Ensure 'cbc' is installed and accessible in your system's PATH.
     # If you have another solver (e.g., GLPK), you can specify it here: SolverFactory('glpk')
     solver = SolverFactory('glpk')
-
-    tmpdir = tempfile.mkdtemp(dir="/tmp")
-    results = solver.solve(model, tee=True, keepfiles=False, tmpdir=tmpdir)
+    results = solver.solve(model, tee=True)
 
     # Process and print the results based on the solver's status
     if (results.solver.status == SolverStatus.ok) and \
