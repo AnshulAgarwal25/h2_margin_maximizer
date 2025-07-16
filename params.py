@@ -8,7 +8,8 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 # CONSTRAINT_DB_PATH = os.path.join(DATA_DIR, "constraints_db.json")
 AUDIT_LOG_PATH = os.path.join(DATA_DIR, "audit_log.csv")
-
+DB_PATH = "hydrogen_allocation_table.db"
+TABLE_NAME = "audit_log"
 # --- Constants ---
 
 ROLES = [

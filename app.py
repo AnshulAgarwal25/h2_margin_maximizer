@@ -16,12 +16,14 @@ from pages.auth import auth_page
 from pages.common_dashboard import common_dashboard_page
 from pages.constraint_entry import constraint_entry_page
 from params import *
+from utils.audit_logging import initialize_audit_log_table
 
 st.set_page_config(layout="wide", page_title="Hydrogen Allocation Tool",
                    initial_sidebar_state="collapsed", page_icon="📈")
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 initialize_db(ROLES, get_constraints(), list(HYDROGEN_ALLOCATION_DATA.keys()))
+initialize_audit_log_table()
 
 # if "constraint_values" not in st.session_state:
 #     st.session_state.constraint_values = {}
