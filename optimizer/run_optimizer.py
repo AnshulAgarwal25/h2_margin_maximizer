@@ -181,6 +181,13 @@ def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dum
         final_constraints['h2o2']['min'] = (constraints['H2O2 Plant']['H2O2 Production Capacity (TPD)']['min'] / 24) * \
                                            constraints['H2O2 Plant']['H2 (NM3) required per ton of H2O2']
 
+    # flaker 3 and 4 current flow matching
+    final_constraints['flaker-3']['max'] = max(final_constraints['flaker-3']['max'],
+                                               dcs_constraints['flaker-3_h2_flow'])
+
+    final_constraints['flaker-4']['max'] = max(final_constraints['flaker-4']['max'],
+                                               dcs_constraints['flaker-4_h2_flow'])
+
     # if duration < 1hr, then cant change flaker 3 & 4 flow
     if (dcs_constraints['header_pressure'] >= constraints['H2 Plant']['Header Pressure Threshold (kgf/cm2)']['max'] and
             dcs_constraints['pipeline_disruption_hrs'] < constraints['Flaker Plant'][
