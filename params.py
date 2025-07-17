@@ -148,14 +148,14 @@ def get_constraints():
             {"name": "Flaker", "type": "single"},
             {"name": "Boiler", "type": "single"},
             {"name": "HCl", "type": "single"},
-            {"name": "Vent", "type": "single"}
+            {"name": "Vent", "type": "single", "disabled": True}
         ],
         "Caustic Plant": [
-            {"name": "Duration of pipeline demand change (hrs)", "type": "single"},
+            # {"name": "Duration of pipeline demand change (hrs)", "type": "single", "disabled": True},
             {"name": "Total Caustic Production (TPD)", "type": "range"},
-            {"name": "H2 generated (NM3) per ton of caustic", "type": "single"},
+            {"name": "H2 generated (NM3) per ton of caustic", "type": "single", "disabled": True},
             {"name": "Total HCl Production (TPD)", "type": "range"},
-            {"name": "H2 required (NM3) per ton of HCl", "type": "single"}
+            {"name": "H2 required (NM3) per ton of HCl", "type": "single", "disabled": True}
         ],
         "H2 Plant": [
             {"name": "Pipeline Compressor Capacity (NM3/hr)", "type": "range"},
@@ -165,7 +165,7 @@ def get_constraints():
         ],
         "H2O2 Plant": [
             {"name": "H2O2 Production Capacity (TPD)", "type": "range"},
-            {"name": "H2 (NM3) required per ton of H2O2", "type": "single"},
+            {"name": "H2 (NM3) required per ton of H2O2", "type": "single", "disabled": True},
             {"name": "Load increase/decrease time for H2O2 (hrs)", "type": "single"}
         ],
         "Power Plant": [
@@ -173,8 +173,8 @@ def get_constraints():
             {"name": "P120 - H2 capacity", "type": "range"},
             {"name": "P60 - Load inc/dec time (hrs)", "type": "single"},
             {"name": "P120 - Load inc/dec time (hrs)", "type": "single"},
-            {"name": "Conversion: H2 (1 Nm3/hr) to Coal (X ton/hr)", "type": "single"},
-            {"name": "Conversion: H2 (X Nm3) to H2 (1 ton)", "type": "single"}
+            # {"name": "Conversion: H2 (1 Nm3/hr) to Coal (X ton/hr)", "type": "single", "disabled": True},
+            # {"name": "Conversion: H2 (X Nm3) to H2 (1 ton)", "type": "single", "disabled": True}
         ],
         "Dashboard": []
     }
@@ -183,8 +183,8 @@ def get_constraints():
     for i in range(1, 5):
         flaker_constraints.extend([
             {"name": f"Flaker-{i} Load Capacity (TPD)", "type": "range"},
-            {"name": f"Flaker-{i} H2 Specific Consumption (NM3/Ton)", "type": "single"},
-            {"name": f"Flaker-{i} NG Specific Consumption (SCM/Ton)", "type": "single"},
+            {"name": f"Flaker-{i} H2 Specific Consumption (NM3/Ton)", "type": "single", "disabled": True},
+            {"name": f"Flaker-{i} NG Specific Consumption (SCM/Ton)", "type": "single", "disabled": True},
         ])
 
     flaker_constraints.extend([{"name": "Flaker - Changeover time (NG to mix) (hrs)", "type": "single"},

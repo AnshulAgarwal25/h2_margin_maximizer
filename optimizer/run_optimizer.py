@@ -97,7 +97,7 @@ def trigger_optimizer_if_needed(manual_trigger=False):
 
 
 def get_final_constraint_values(constraints, dcs_constraints=dcs_constraints_dummy):
-    for flaker in ['flaker-1_load', 'flaker-2_load']:
+    for flaker in ['flaker-1_h2_flow', 'flaker-2_h2_flow']:
         if dcs_constraints[flaker] <= 10:
             dcs_constraints[flaker] = 0
 

@@ -40,12 +40,14 @@ def constraint_entry_page():
                 current_min = st.session_state.constraint_values[role].get(constraint_name, {}).get("min", 0)
                 current_max = st.session_state.constraint_values[role].get(constraint_name, {}).get("max", 100)
 
-                new_min = st.number_input(f"Min for {constraint_name}", value=current_min,
-                                          key=f"{role}_{constraint_name}_min")
-                new_max = st.number_input(f"Max for {constraint_name}", value=current_max,
-                                          key=f"{role}_{constraint_name}_max")
+                constraint_disabled = constraint_item.get("disabled", False)
 
-                if new_min != current_min or new_max != current_max:
+                new_min = st.number_input(f"Min for {constraint_name}", value=current_min,
+                                          key=f"{role}_{constraint_name}_min", disabled=constraint_disabled)
+                new_max = st.number_input(f"Max for {constraint_name}", value=current_max,
+                                          key=f"{role}_{constraint_name}_max", disabled=constraint_disabled)
+
+                if not constraint_disabled and (new_min != current_min or new_max != current_max):
                     st.session_state.proposed_changes[constraint_name] = {
                         "old_min": current_min, "new_min": new_min,
                         "old_max": current_max, "new_max": new_max,
@@ -56,10 +58,12 @@ def constraint_entry_page():
 
             elif constraint_type == "single":
                 current_value = st.session_state.constraint_values[role].get(constraint_name, 0)
-                new_value = st.number_input(f"Value for {constraint_name}", value=current_value,
-                                            key=f"{role}_{constraint_name}_single")
 
-                if new_value != current_value:
+                constraint_disabled = constraint_item.get("disabled", False)
+                new_value = st.number_input(f"Value for {constraint_name}", value=current_value,
+                                            key=f"{role}_{constraint_name}_single", disabled=constraint_disabled)
+
+                if not constraint_disabled and new_value != current_value:
                     st.session_state.proposed_changes[constraint_name] = {
                         "old_value": current_value, "new_value": new_value,
                         "type": "single"
