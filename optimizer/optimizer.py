@@ -121,6 +121,31 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
     return model
 
 
+def flaker_mismatch_handling(p, allocation_amount, dcs_constraints):
+    """
+    Matching flaker allocation to actual flows if within 2% of difference with actual
+
+    :param p: allocation point name
+    :param allocation_amount: actual value allocated
+    :param dcs_constraints: also contains flaker 3 and 4 current flow
+    :return: new allocated amount
+    """
+    new_allocation_amount = allocation_amount
+
+    # Define tolerance check mapping
+    flaker_targets = {
+        'flaker-3': 'flaker-3_h2_flow',
+        'flaker-4': 'flaker-4_h2_flow'
+    }
+
+    if p in flaker_targets:
+        target_flow = dcs_constraints[flaker_targets[p]]
+        if abs(allocation_amount - target_flow) <= 0.02 * target_flow:
+            new_allocation_amount = target_flow
+
+    return new_allocation_amount
+
+
 def solve_h2_optimizer(duration, final_constraints, prices,
                        entry_constraints,
                        dcs_constraints=dcs_constraints_dummy):
@@ -169,6 +194,9 @@ def solve_h2_optimizer(duration, final_constraints, prices,
 
             is_allocated = bool(round(alloc_val)) if alloc_val is not None else False
             allocated_amount = h2_val if h2_val is not None else 0.0
+
+            if p in ['flaker-3', 'flaker-4']:
+                allocated_amount = flaker_mismatch_handling(p, allocated_amount, dcs_constraints)
 
             allocation_details[p] = {
                 'allocated': is_allocated,
