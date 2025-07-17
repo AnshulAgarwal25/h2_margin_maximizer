@@ -97,9 +97,9 @@ def common_dashboard_page():
         recommended_flow_value = round((df["Recommended (NM³/hr)"] * df["Margin per Unit (NM3)"]).sum(), 2)
         total_value_df = pd.DataFrame(
             [{
-                'Current Flow - Value (Rs)': current_flow_value,
-                'Recommended Flow - Value (Rs)': recommended_flow_value,
-                'Difference - (Rs)': recommended_flow_value - current_flow_value
+                'Current Flow - Value (Rs/hr)': current_flow_value,
+                'Recommended Flow - Value (Rs/hr)': recommended_flow_value,
+                'Difference - (Rs/hr)': recommended_flow_value - current_flow_value
             }])
         st.dataframe(total_value_df, use_container_width=False, hide_index=True)
 
