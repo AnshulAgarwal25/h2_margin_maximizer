@@ -60,6 +60,13 @@ def populate_latest_dcs_constraints():
                     ) * data[f'{post_prefix}_CAPACITY'].values[0]
 
         bank_available += available
+
+    # checking if bank_in_filling_mode or not
+    bank_in_filling = 0
+    for i in range(1, 8):  # Banks 1 to 7
+        post_prefix = f'H2_POST_{i}_BANK'
+        bank_in_filling += data[f'{post_prefix}_IN_FILLING'].values[0]
+
     # original data in TPD
     hcl_production = (data['1350TPD_HCL_FURNACE_1'].values[0] + data['1350TPD_HCL_FURNACE_2'].values[0] +
                       data['1350TPD_HCL_FURNACE_3'].values[0] + data['1350TPD_HCL_FURNACE_4'].values[0] +
@@ -105,6 +112,7 @@ def populate_latest_dcs_constraints():
         "flaker-3_h2_flow": data['Flaker_850tpd_running_or_not_binary_1'].values[0],
         "flaker-4_h2_flow": data['Flaker_850tpd_running_or_not_binary_2'].values[0],
         "pipeline_disruption_hrs": data['pipeline_disruption_hrs'].values[0],
+        "is_bank_on": bank_in_filling,
         "total_h2_flow": (pipeline_flow + h2_in_hcl + ech_flow + data['Flaker_450tpd_running_or_not_binary'].values[0] +
                           data['Flaker_600tpd_running_or_not_binary'].values[0] +
                           data['Flaker_850tpd_running_or_not_binary_1'].values[0] +

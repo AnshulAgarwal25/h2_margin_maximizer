@@ -43,6 +43,26 @@ def modify_allocation_display(dashboard_data):
     return items
 
 
+def get_blinker_status(allocation_data):
+    status = {}
+    for area, data in allocation_data:
+        data["is_on"] = True if data["allocated"] > 0 else False
+        blinker = "🟢" if data.get("is_on", True) else "⚪"
+
+        if area == "Bank":
+            is_filling = st.session_state.get("bank_filling_status", False)
+            blinker = "🟢" if is_filling else "⚪"
+
+        # adding this since flaker-2 has some trickle H2 flow in Flow metre
+        if area == "Flaker - 2":
+            blinker = "🟢" if data["allocated"] > 5 else "⚪"
+        # if area == "Vent":
+        #     pass
+
+        status[area] = blinker
+    return status
+
+
 def common_dashboard_page():
     """Displays the common hydrogen allocation dashboard."""
     st.title("Hydrogen Allocation Dashboard (NM³/hr)")
@@ -56,9 +76,11 @@ def common_dashboard_page():
 
     dashboard_data = modify_allocation_display(st.session_state.dashboard_data)
 
+    status = get_blinker_status(dashboard_data)
     # Convert dashboard data to a DataFrame for easy display
     df = pd.DataFrame([
-        {"Area": area,
+        {"": status[area],
+         "Area": area,
          "Allocated (NM³/hr)": data["allocated"],
          "Recommended (NM³/hr)": data["recommended"],
          "Status": data["status"],

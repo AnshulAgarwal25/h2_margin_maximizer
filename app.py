@@ -8,15 +8,15 @@ from streamlit_autorefresh import st_autorefresh
 
 from database import (
     initialize_db,
-    load_latest_allocation_data,
     load_latest_constraints
 )
-from optimizer.run_optimizer import trigger_optimizer_if_needed, last_run_constraints_trigger_run, initial_db_trigger
+from optimizer.run_optimizer import trigger_optimizer_if_needed
 from pages.auth import auth_page
 from pages.common_dashboard import common_dashboard_page
 from pages.constraint_entry import constraint_entry_page
 from params import *
 from utils.audit_logging import initialize_audit_log_table
+from utils.session_state_init import session_state_init
 
 st.set_page_config(layout="wide", page_title="Hydrogen Allocation Tool",
                    initial_sidebar_state="collapsed", page_icon="📈")
@@ -25,45 +25,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 initialize_db(ROLES, get_constraints(), list(HYDROGEN_ALLOCATION_DATA.keys()))
 initialize_audit_log_table()
 
-# if "constraint_values" not in st.session_state:
-#     st.session_state.constraint_values = {}
-#
-# if "last_run_constraints" not in st.session_state:
-#     st.session_state.last_run_constraints = {}
-
-# --- Session State Initialization ---
-if "initial_db_setup_done" not in st.session_state:
-    initial_db_trigger()
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-if "username" not in st.session_state:
-    st.session_state.username = "Guest"  # Simulated user
-if "selected_role" not in st.session_state:
-    st.session_state.selected_role = None
-if "current_page" not in st.session_state:
-    st.session_state.current_page = "auth"
-
-# Initialize constraint_values as an empty dict to be populated on role selection
-if "constraint_values" not in st.session_state:
-    st.session_state.constraint_values = {}
-
-# Load initial dashboard data from the database
-if "dashboard_data" not in st.session_state:
-    st.session_state.dashboard_data = load_latest_allocation_data(HYDROGEN_ALLOCATION_DATA)
-
-# Flag to indicate if optimizer should run due to button click
-if "run_optimizer_button_clicked" not in st.session_state:
-    st.session_state.run_optimizer_button_clicked = False
-
-if "optimizer_run" not in st.session_state:
-    st.session_state.optimizer_run = False
-
-if "duration" not in st.session_state:
-    st.session_state.duration = 0
-
-# --- OPTIMIZER TRIGGERING START ---
-if "last_run_constraints" not in st.session_state:
-    last_run_constraints_trigger_run()
+session_state_init()
 
 
 def main():

@@ -212,6 +212,8 @@ def generate_hydrogen_recommendations(dcs_constraints, current_flow):
     Returns:
         dict: A dictionary of hydrogen allocation data with updated 'recommended' values.
     """
+    st.session_state.bank_filling_status = dcs_constraints["is_bank_on"] > 0
+
     ROLE_CONSTRAINTS = get_constraints()
     all_latest_constraints = {}
     for role in ROLES:
