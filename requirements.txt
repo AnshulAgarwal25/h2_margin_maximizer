@@ -16,3 +16,5 @@ msal~=1.32.3
 requests~=2.32.4
 pyarrow~=20.0.0
 python-dotenv==1.1.1
+
+requests

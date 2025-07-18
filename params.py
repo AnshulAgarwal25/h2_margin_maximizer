@@ -134,6 +134,8 @@ allocation_to_margin_category = {
     'vent': 'Vent'
 }
 
+# email_list = ["Anshul_Agarwal@mckinsey.com", "Nishu_Singh@mckinsey.com",]
+#               #"pankajminare@dcmshriram.com", "rksahu@dcmshriram.com"]
 
 def get_constraints():
     ROLE_CONSTRAINTS = {

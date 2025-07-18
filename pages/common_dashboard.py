@@ -6,8 +6,13 @@ from optimizer.run_optimizer import trigger_optimizer_if_needed
 from utils.downloader import downloader_allocation, downloader_audit
 
 
+# from adherence.emails import load_message
+
 @st.dialog("New Recommendation Available")
-def optimizer_run_notification():
+def optimizer_run_notification(
+        # df, total_df, total_value_df
+):
+    # load_message(df, total_df, total_value_df)
     st.write("Optimizer ran. New Recommendation Available!")
 
 
@@ -69,7 +74,9 @@ def common_dashboard_page():
     st.write(f"Logged in as: **{st.session_state.username}** (Role: **{st.session_state.selected_role}**)")
 
     if st.session_state.optimizer_run:
-        optimizer_run_notification()
+        optimizer_run_notification(
+            # df, total_df, total_value_df
+        )
         st.session_state.optimizer_run = False
 
     st.write("### Current Hydrogen Allocations:")
