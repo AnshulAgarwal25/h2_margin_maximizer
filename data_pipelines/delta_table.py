@@ -122,13 +122,16 @@ def populate_latest_dcs_constraints():
                           data['Boiler_P120_current_H2_NM3_per_hr'].values[0])
     }
 
+    flaker1_flow = data['Flaker_450tpd_running_or_not_binary'].values[0]
+    flaker2_flow = data['Flaker_600tpd_running_or_not_binary'].values[0]
+
     current_flow = {
         "pipeline": pipeline_flow,
         "bank": 0,
         "ech_flow": ech_flow,
         "hcl": h2_in_hcl + ech_flow,
-        "flaker-1": data['Flaker_450tpd_running_or_not_binary'].values[0],
-        "flaker-2": data['Flaker_600tpd_running_or_not_binary'].values[0],
+        "flaker-1": 0 if flaker1_flow < 10 else flaker1_flow,
+        "flaker-2": 0 if flaker2_flow < 10 else flaker2_flow,
         "flaker-3": data['Flaker_850tpd_running_or_not_binary_1'].values[0],
         "flaker-4": data['Flaker_850tpd_running_or_not_binary_2'].values[0],
         "h2o2": data['H2O2_H2_current_NM3_per_hr'].values[0],
