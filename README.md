@@ -18,7 +18,7 @@
 ### Configuring App Service
 #### Config:
 1. OS - Linux
-2. Tier - P0V3
+2. Tier - P1V3
 3. Container - ACR
 4. Select Registry
 5. Add Image Name - `margin_max`

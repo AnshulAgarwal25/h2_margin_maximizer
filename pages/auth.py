@@ -12,14 +12,14 @@ def auth_page():
 
     # Simulate user ID for demonstration
     if not st.session_state.authenticated:
-        # engage_auth_page()
+        engage_auth_page()
 
         # Bypass Microsoft Login for Testing and Simulation
-        st.session_state.username = st.text_input("Enter your User ID (e.g., 'user123')", value="user123")
-        if st.button("Simulate Login"):
-            st.session_state.authenticated = True
-            st.session_state.current_page = "role_selection"
-            st.rerun()
+        # st.session_state.username = st.text_input("Enter your User ID (e.g., 'user123')", value="user123")
+        # if st.button("Simulate Login"):
+        #     st.session_state.authenticated = True
+        #     st.session_state.current_page = "role_selection"
+        #     st.rerun()
 
     if st.session_state.authenticated:
         st.write(f"Logged in as: **{st.session_state.username}**")

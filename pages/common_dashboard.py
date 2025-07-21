@@ -1,10 +1,9 @@
 import pandas as pd
 import streamlit as st
 
-from database import save_allocation_data
+from database import save_allocation_data, load_all_allocations
 from optimizer.run_optimizer import trigger_optimizer_if_needed
 from utils.downloader import downloader_allocation, downloader_audit
-
 
 # from adherence.emails import load_message
 
@@ -81,60 +80,68 @@ def common_dashboard_page():
         )
         st.session_state.optimizer_run = False
 
-    st.write("### Current Hydrogen Allocations:")
-
-    dashboard_data = modify_allocation_display(st.session_state.dashboard_data)
-
-    status = get_blinker_status(dashboard_data)
-    # Convert dashboard data to a DataFrame for easy display
-    df = pd.DataFrame([
-        {"": status[area],
-         "Area": area,
-         "Allocated (NM³/hr)": data["allocated"],
-         "Recommended (NM³/hr)": data["recommended"],
-         "Status": data["status"],
-         "Comments": data["comment"],
-         "Min (Constrained)": data['min_constrained'],
-         "Max (Constrained)": data['max_constrained'],
-         "Margin per Unit (NM3)": data['margin_per_unit'],
-         }
-        for area, data in dashboard_data
-    ])
-
-    # st.dataframe(df, use_container_width=True, hide_index=True)
-    def highlight_if_under_allocated(row):
-        if row["Area"] == "Vent":
-            return [''] * len(row)
-        elif row["Allocated (NM³/hr)"] + 1 < row["Recommended (NM³/hr)"]:
-            return ['background-color: yellow'] * len(row)
-        else:
-            return [''] * len(row)
-
-    numeric_cols = ["Allocated (NM³/hr)", "Recommended (NM³/hr)", "Min (Constrained)", "Max (Constrained)",
-                    "Margin per Unit (NM3)"]
-    styled_df = df.style.apply(highlight_if_under_allocated, axis=1).format({col: "{:.2f}" for col in numeric_cols})
-    st.write(styled_df)
-
-    col1, col2 = st.columns(2)
-
+    col1, col2 = st.columns([2, 1])
     with col1:
-        total_df = pd.DataFrame([{'Current Flow (H2 in NM3/hr)': df["Allocated (NM³/hr)"].sum(),
-                                  'Recommended Flow (H2 in NM3/hr)': df["Recommended (NM³/hr)"].sum()}])
-        st.dataframe(total_df, use_container_width=False, hide_index=True)
+
+        st.subheader("Current Hydrogen Allocations:")
+
+        dashboard_data = modify_allocation_display(st.session_state.dashboard_data)
+
+        status = get_blinker_status(dashboard_data)
+        # Convert dashboard data to a DataFrame for easy display
+        df = pd.DataFrame([
+            {"": status[area],
+             "Area": area,
+             "Allocated (NM³/hr)": data["allocated"],
+             "Recommended (NM³/hr)": data["recommended"],
+             "Status": data["status"],
+             "Comments": data["comment"],
+             "Min (Constrained)": data['min_constrained'],
+             "Max (Constrained)": data['max_constrained'],
+             "Margin per Unit (NM3)": data['margin_per_unit'],
+             }
+            for area, data in dashboard_data
+        ])
+
+        # st.dataframe(df, use_container_width=True, hide_index=True)
+        def highlight_if_under_allocated(row):
+            if row["Area"] == "Vent":
+                return [''] * len(row)
+            elif row["Allocated (NM³/hr)"] + 1 < row["Recommended (NM³/hr)"]:
+                return ['background-color: yellow'] * len(row)
+            else:
+                return [''] * len(row)
+
+        numeric_cols = ["Allocated (NM³/hr)", "Recommended (NM³/hr)", "Min (Constrained)", "Max (Constrained)",
+                        "Margin per Unit (NM3)"]
+        styled_df = df.style.apply(highlight_if_under_allocated, axis=1).format({col: "{:.2f}" for col in numeric_cols})
+        st.write(styled_df)
+
+        col1_x, col2_x = st.columns(2)
+
+        with col1_x:
+            total_df = pd.DataFrame([{'Current Flow (H2 in NM3/hr)': df["Allocated (NM³/hr)"].sum(),
+                                      'Recommended Flow (H2 in NM3/hr)': df["Recommended (NM³/hr)"].sum()}])
+            st.dataframe(total_df, use_container_width=False, hide_index=True)
+
+        with col2_x:
+            # show value comparison
+            current_flow_value = round((df["Allocated (NM³/hr)"] * df["Margin per Unit (NM3)"]).sum(), 2)
+            recommended_flow_value = round((df["Recommended (NM³/hr)"] * df["Margin per Unit (NM3)"]).sum(), 2)
+            total_value_df = pd.DataFrame(
+                [{
+                    'Current Flow - Value (Rs/hr)': current_flow_value,
+                    'Recommended Flow - Value (Rs/hr)': recommended_flow_value,
+                    'Difference - (Rs/hr)': recommended_flow_value - current_flow_value
+                }])
+            st.dataframe(total_value_df, use_container_width=False, hide_index=True)
+
+        st.write(f'Duration of Disruption: {st.session_state.duration}')
 
     with col2:
-        # show value comparison
-        current_flow_value = round((df["Allocated (NM³/hr)"] * df["Margin per Unit (NM3)"]).sum(), 2)
-        recommended_flow_value = round((df["Recommended (NM³/hr)"] * df["Margin per Unit (NM3)"]).sum(), 2)
-        total_value_df = pd.DataFrame(
-            [{
-                'Current Flow - Value (Rs/hr)': current_flow_value,
-                'Recommended Flow - Value (Rs/hr)': recommended_flow_value,
-                'Difference - (Rs/hr)': recommended_flow_value - current_flow_value
-            }])
-        st.dataframe(total_value_df, use_container_width=False, hide_index=True)
-
-    st.write(f'Duration of Disruption: {st.session_state.duration}')
+        st.subheader("Allocation Log (Last 10 entries)")
+        allocation_hist = load_all_allocations().tail(10)
+        st.dataframe(allocation_hist, height=300, use_container_width=True)
 
     st.write("---")
     st.write("### Operator Actions (Accept/Reject Recommendations):")
