@@ -102,4 +102,9 @@ column_name_mapping = {
     '4FIC621A.PV': 'CL2_FLOW_TO_HCL_FURNACE_5',
     '4FIC621B.PV': 'CL2_FLOW_TO_HCL_FURNACE_6',
     'H2PIPE_DMD_DEC_HR': 'pipeline_disruption_hrs',
+
+    'PC617X.MV': 'H2_vent_valve_CMD_332',
+    'PC617Y.MV': 'H2_vent_valve_CMD_450',
+    'PC617.MV': 'H2_vent_valve_CMD_600',
+    '4PFCV617': 'H2_vent_valve_CMD_850',
 }

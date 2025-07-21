@@ -31,10 +31,10 @@ def get_dcs_data_table(table_name):
 
 def populate_latest_dcs_constraints():
     data = get_dcs_data_table(table_name='DCS_Tag1_st')
-    data = data.dropna()
+    data = data.apply(np.vectorize(lambda x: float(x) if isinstance(x, decimal.Decimal) else x))
+    data = data.fillna(0)
     print("DCS Data Fetched")
     data = data.iloc[:1]
-    data = data.apply(np.vectorize(lambda x: float(x) if isinstance(x, decimal.Decimal) else x))
 
     caustic_production = (data['Caustic_Caustic Production_332tpd_TPH'].values[0] +
                           data['Caustic_Caustic Production_450tpd_TPH'].values[0] +
@@ -87,6 +87,11 @@ def populate_latest_dcs_constraints():
                  data['H2_FLOW_TO_HCL_FURNACE_3'].values[0] + data['H2_FLOW_TO_HCL_FURNACE_4'].values[0] +
                  data['H2_FLOW_TO_HCL_FURNACE_5'].values[0] + data['H2_FLOW_TO_HCL_FURNACE_6'].values[0])
 
+    venting_check = 1 if (data['H2_vent_valve_CMD_332'].values[0] +
+                          data['H2_vent_valve_CMD_450'].values[0] +
+                          data['H2_vent_valve_CMD_600'].values[0] +
+                          data['H2_vent_valve_CMD_850'].values[0]) > 3 else 0
+
     dcs_constraints = {
         "332tpd_caustic": data['Caustic_Caustic Production_332tpd_TPH'].values[0],
         "450tpd_caustic": data['Caustic_Caustic Production_450tpd_TPH'].values[0],
@@ -113,6 +118,7 @@ def populate_latest_dcs_constraints():
         "flaker-4_h2_flow": data['Flaker_850tpd_running_or_not_binary_2'].values[0],
         "pipeline_disruption_hrs": data['pipeline_disruption_hrs'].values[0],
         "is_bank_on": bank_in_filling,
+        "is_vent_on": venting_check,
         "total_h2_flow": (pipeline_flow + h2_in_hcl + ech_flow + data['Flaker_450tpd_running_or_not_binary'].values[0] +
                           data['Flaker_600tpd_running_or_not_binary'].values[0] +
                           data['Flaker_850tpd_running_or_not_binary_1'].values[0] +

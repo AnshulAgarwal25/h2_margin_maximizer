@@ -13,6 +13,10 @@ def session_state_init():
 
     if "bank_filling_status" not in st.session_state:
         st.session_state.bank_filling_status = False
+
+    if "vent_filling_status" not in st.session_state:
+        st.session_state.vent_filling_status = False
+
     # --- Session State Initialization ---
     if "initial_db_setup_done" not in st.session_state:
         initial_db_trigger()

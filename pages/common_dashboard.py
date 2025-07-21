@@ -58,11 +58,13 @@ def get_blinker_status(allocation_data):
             is_filling = st.session_state.get("bank_filling_status", False)
             blinker = "🟢" if is_filling else "⚪"
 
+        if area == "Vent":
+            vent = st.session_state.get("vent_filling_status", False)
+            blinker = "🟢" if vent else "⚪"
+
         # adding this since flaker-2 has some trickle H2 flow in Flow metre
         if area == "Flaker - 2":
             blinker = "🟢" if data["allocated"] > 5 else "⚪"
-        # if area == "Vent":
-        #     pass
 
         status[area] = blinker
     return status

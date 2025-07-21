@@ -71,6 +71,11 @@ def trigger_optimizer_if_needed(manual_trigger=False):
         st.session_state.run_optimizer_button_clicked = False  # Reset button flag
         print("Manual button clicked.")
 
+    if not should_run_optimizer:
+        if st.session_state.current_page == "dashboard":
+            should_run_optimizer = True
+            optimizer_trigger_reason.append("Values updated!")
+
     if should_run_optimizer:
         st.info(f"Triggering optimizer due to: {', '.join(optimizer_trigger_reason)}")
         new_recommendations = generate_hydrogen_recommendations(dcs_constraints, current_flow)
@@ -213,6 +218,7 @@ def generate_hydrogen_recommendations(dcs_constraints, current_flow):
         dict: A dictionary of hydrogen allocation data with updated 'recommended' values.
     """
     st.session_state.bank_filling_status = dcs_constraints["is_bank_on"] > 0
+    st.session_state.vent_filling_status = dcs_constraints['is_vent_on'] == 1
 
     ROLE_CONSTRAINTS = get_constraints()
     all_latest_constraints = {}
