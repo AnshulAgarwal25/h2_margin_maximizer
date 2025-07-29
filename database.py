@@ -437,3 +437,64 @@ def initialize_db(roles, role_constraints_map, allocation_areas):
     # Create the common allocation table
     create_allocation_table(allocation_areas)
     create_optimizer_state_table()
+    create_norm_table()
+
+
+# CONSUMPTION NORM
+
+def create_norm_table():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    table_name = "caustic_norm_log"
+    cursor.execute(f'''
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            timestamp TEXT,
+            norm_value REAL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+
+def save_norm_value(norm_value):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    table_name = "caustic_norm_log"
+
+    ist = pytz.timezone('Asia/Kolkata')
+    last_updated = datetime.datetime.now(ist).isoformat(timespec='milliseconds')
+
+    try:
+        cur.execute(f"INSERT INTO {table_name} (timestamp, norm_value) VALUES (?, ?)",
+                    (last_updated, norm_value))
+        conn.commit()
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e):
+            create_norm_table()
+            # Retry insert after creating table
+            cur.execute(f"INSERT INTO {table_name} (timestamp, norm_value) VALUES (?, ?)",
+                        (last_updated, norm_value))
+            conn.commit()
+        else:
+            raise e  # Re-raise if it's another error
+    finally:
+        conn.close()
+
+
+def get_latest_norm_value():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    table_name = "caustic_norm_log"
+
+    try:
+        cur.execute(f"SELECT norm_value FROM {table_name} ORDER BY timestamp DESC LIMIT 1")
+        row = cur.fetchone()
+        return row[0] if row else 280
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e):
+            create_norm_table()
+            return 280  # fallback if table didn't exist
+        else:
+            raise e
+    finally:
+        conn.close()

@@ -45,6 +45,8 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
 
     def _get_margin(model, point):
         category = allocation_to_margin_category[point]
+        if point == 'boiler_p60':
+            return effective_contribution_margin[category] + 0.01
         return effective_contribution_margin[category]
 
     model.margin = Param(model.ALLOCATION_POINTS, initialize=_get_margin)
@@ -89,31 +91,31 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
 
     model.mandatory_allocation = Constraint(model.ALLOCATION_POINTS, rule=mandatory_allocation_rule)
 
-    # # --- 5. Special Disjunctive Constraint for flaker-3 and flaker-4 ---
-    # BIG_M = 10_000
-    #
-    # model.flaker_range_mode = Var(['flaker-3', 'flaker-4'], domain=Binary)
-    #
-    # model.flaker_restricted_upper = ConstraintList()
-    # model.flaker_exact_max_lower = ConstraintList()
-    # model.flaker_exact_max_upper = ConstraintList()
-    #
-    # for p in ['flaker-3', 'flaker-4']:
-    #     min_val = dummy_constraints[p]['min']
-    #     max_val = dummy_constraints[p]['max']
-    #
-    #     # If range_mode = 0 → h2_amount ≤ max - 1200
-    #     model.flaker_restricted_upper.add(
-    #         model.h2_amount[p] <= (max_val - 1200) + BIG_M * model.flaker_range_mode[p]
-    #     )
-    #
-    #     # If range_mode = 1 → h2_amount = max (enforced via lower and upper bounds)
-    #     model.flaker_exact_max_lower.add(
-    #         model.h2_amount[p] >= max_val - BIG_M * (1 - model.flaker_range_mode[p])
-    #     )
-    #     model.flaker_exact_max_upper.add(
-    #         model.h2_amount[p] <= max_val + BIG_M * (1 - model.flaker_range_mode[p])
-    #     )
+    # --- 5. Special Disjunctive Constraint for flaker-3 and flaker-4 ---
+    BIG_M = 10_000
+
+    model.flaker_range_mode = Var(['flaker-3'], domain=Binary)
+
+    model.flaker_restricted_upper = ConstraintList()
+    model.flaker_exact_max_lower = ConstraintList()
+    model.flaker_exact_max_upper = ConstraintList()
+
+    for p in ['flaker-3']:
+        min_val = dummy_constraints[p]['min']
+        max_val = dummy_constraints[p]['max']
+
+        # If range_mode = 0 → h2_amount ≤ max - (400*(220/67))
+        model.flaker_restricted_upper.add(
+            model.h2_amount[p] <= (max_val - (400 * (220 / 67))) + BIG_M * model.flaker_range_mode[p]
+        )
+
+        # If range_mode = 1 → h2_amount = max (enforced via lower and upper bounds)
+        model.flaker_exact_max_lower.add(
+            model.h2_amount[p] >= max_val - BIG_M * (1 - model.flaker_range_mode[p])
+        )
+        model.flaker_exact_max_upper.add(
+            model.h2_amount[p] <= max_val + BIG_M * (1 - model.flaker_range_mode[p])
+        )
 
     # # --- 6. Dual variables for sensitivity analysis (optional) ---
     # model.dual = Suffix(direction=Suffix.IMPORT)
@@ -123,7 +125,7 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
 
 def flaker_mismatch_handling(p, allocation_amount, dcs_constraints):
     """
-    Matching flaker allocation to actual flows if within 2% of difference with actual
+    Matching flaker allocation to actual flows if within 2% of the difference with actual
 
     :param p: allocation point name
     :param allocation_amount: actual value allocated
@@ -153,7 +155,7 @@ def solve_h2_optimizer(duration, final_constraints, prices,
     Builds and solves the H2 allocation optimization model.
 
     Args:
-        duration (int): The duration in days.
+        duration (int): The duration of days.
         final_constraints (dict): Final min and max for allocation areas
         prices (dict): Contribution margin for all allocation areas
         entry_constraints (dict): entry constraints loaded from last entry
@@ -163,17 +165,20 @@ def solve_h2_optimizer(duration, final_constraints, prices,
         dict: A dictionary containing the optimization results (objective value,
               allocated amounts, and allocation decisions) or an error message.
     """
-    total_h2_generated = (dcs_constraints['caustic_production'] *
-                          entry_constraints['Caustic Plant']['H2 generated (NM3) per ton of caustic'])
+    total_h2_generated = round((dcs_constraints['caustic_production'] *
+                                dcs_constraints['caustic_production_norm']), 2) + 0.52  # adjustment factor - fix later
 
-    if dcs_constraints['total_h2_flow'] > total_h2_generated:
-        total_h2_generated = dcs_constraints['total_h2_flow']
+    if total_h2_generated < dcs_constraints['total_h2_flow']:
+        total_h2_generated = round(dcs_constraints['total_h2_flow'], 2)
 
     model = build_h2_optimizer(total_h2_generated, duration, final_constraints, prices)
 
     # Initialize the CBC solver. Ensure 'cbc' is installed and accessible in your system's PATH.
     # If you have another solver (e.g., GLPK), you can specify it here: SolverFactory('glpk')
     solver = SolverFactory('glpk')
+
+    # interim writing of model files if required for debug
+    # model.write('model_debug.lp', io_options={'symbolic_solver_labels': True})
     results = solver.solve(model, tee=True)
 
     # Process and print the results based on the solver's status

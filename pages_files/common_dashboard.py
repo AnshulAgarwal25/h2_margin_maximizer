@@ -5,14 +5,13 @@ from database import save_allocation_data, load_all_allocations
 from optimizer.run_optimizer import trigger_optimizer_if_needed
 from utils.downloader import downloader_allocation, downloader_audit
 
-# from adherence.emails import load_message
 
-@st.dialog("New Recommendation Available")
-def optimizer_run_notification(
-        # df, total_df, total_value_df
-):
-    # load_message(df, total_df, total_value_df)
-    st.write("Optimizer ran. New Recommendation Available!")
+# @st.dialog("New Recommendation Available")
+# def optimizer_run_notification(
+#         # df, total_df, total_value_df
+# ):
+#     # load_message(df, total_df, total_value_df)
+#     st.write("Optimizer ran. New Recommendation Available!")
 
 
 def modify_allocation_display(dashboard_data):
@@ -62,8 +61,8 @@ def get_blinker_status(allocation_data):
             blinker = "🟢" if vent else "⚪"
 
         # adding this since flaker-2 has some trickle H2 flow in Flow metre
-        if area == "Flaker - 2":
-            blinker = "🟢" if data["allocated"] > 5 else "⚪"
+        if area in ["Flaker - 2", "Flaker - 3 and 4", "H2O2"]:
+            blinker = "🟢" if data["allocated"] > 50 else "⚪"
 
         status[area] = blinker
     return status
@@ -74,11 +73,11 @@ def common_dashboard_page():
     st.title("Hydrogen Allocation Dashboard (NM³/hr)")
     st.write(f"Logged in as: **{st.session_state.username}** (Role: **{st.session_state.selected_role}**)")
 
-    if st.session_state.optimizer_run:
-        optimizer_run_notification(
-            # df, total_df, total_value_df
-        )
-        st.session_state.optimizer_run = False
+    # if st.session_state.optimizer_run:
+    #     optimizer_run_notification(
+    #         # df, total_df, total_value_df
+    #     )
+    #     st.session_state.optimizer_run = False
 
     col1, col2 = st.columns([2, 1])
     with col1:
@@ -193,3 +192,6 @@ def common_dashboard_page():
 
     downloader_allocation()
     downloader_audit()
+
+    st.button("Optimizer - Current Values",
+              on_click=lambda: st.session_state.update(current_page="optimizer_backend_values", selected_role=None))

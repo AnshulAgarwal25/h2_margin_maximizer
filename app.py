@@ -11,9 +11,10 @@ from database import (
     load_latest_constraints
 )
 from optimizer.run_optimizer import trigger_optimizer_if_needed
-from pages.auth import auth_page
-from pages.common_dashboard import common_dashboard_page
-from pages.constraint_entry import constraint_entry_page
+from pages_files.auth import auth_page
+from pages_files.common_dashboard import common_dashboard_page
+from pages_files.constraint_entry import constraint_entry_page
+from pages_files.optimizer_run_latest_values import display_latest_values
 from params import *
 from utils.audit_logging import initialize_audit_log_table
 from utils.session_state_init import session_state_init
@@ -29,7 +30,7 @@ session_state_init()
 
 
 def main():
-    # Display current page based on session state
+    # Display the current page based on session state
     if st.session_state.current_page != "dashboard":
         st.session_state.optimizer_triggered_in_current_run = False
 
@@ -47,14 +48,16 @@ def main():
     elif st.session_state.current_page == "dashboard":
         if "first_dashboard_load" not in st.session_state:
             st.session_state.first_dashboard_load = True
-            ROLE_CONSTRAINTS = get_constraints()
+            role_constraints = get_constraints()
             for role_name in ROLES:
-                if role_name in ROLE_CONSTRAINTS:
+                if role_name in role_constraints:
                     st.session_state.constraint_values[role_name] = load_latest_constraints(role_name,
-                                                                                            ROLE_CONSTRAINTS[
+                                                                                            role_constraints[
                                                                                                 role_name])
         trigger_optimizer_if_needed()
         common_dashboard_page()
+    elif st.session_state.current_page == "optimizer_backend_values":
+        display_latest_values()
 
 
 refresh_interval_ms = 4 * 60 * 1000  # 3 minutes in milliseconds

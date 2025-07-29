@@ -17,6 +17,18 @@ def session_state_init():
     if "vent_filling_status" not in st.session_state:
         st.session_state.vent_filling_status = False
 
+    if "user_input_constraints" not in st.session_state:
+        st.session_state.user_input_constraints = 0
+
+    if "dcs_constraints" not in st.session_state:
+        st.session_state.dcs_constraints = 0
+
+    if "current_flow" not in st.session_state:
+        st.session_state.current_flow = 0
+
+    if "dcs_raw_data" not in st.session_state:
+        st.session_state.dcs_raw_data = 0
+
     # --- Session State Initialization ---
     if "initial_db_setup_done" not in st.session_state:
         initial_db_trigger()

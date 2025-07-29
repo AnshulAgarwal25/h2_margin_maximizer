@@ -86,8 +86,8 @@ column_name_mapping = {
     "PL850TPD.PV": "Caustic_Caustic Production_850tpd_TPH",
 
     "PI627X": "H2_Bank_Pressure_Tag_1",
-    "PI628X": "H2_Bank_Pressure_Tag_1",
-    "PI629": "H2_Bank_Pressure_Tag_1",
+    "PI628X": "H2_Bank_Pressure_Tag_2",
+    "PI629": "H2_Bank_Pressure_Tag_3",
 
     'FC622.PV': 'H2_FLOW_TO_HCL_FURNACE_1',
     'FC622N.PV': 'H2_FLOW_TO_HCL_FURNACE_2',
@@ -107,4 +107,22 @@ column_name_mapping = {
     'PC617Y.MV': 'H2_vent_valve_CMD_450',
     'PC617.MV': 'H2_vent_valve_CMD_600',
     '4PFCV617': 'H2_vent_valve_CMD_850',
+
+    '02FI8401.PV': 'NG_flow_in_Flaker3',
+    '03FI8401.PV': 'NG_flow_in_Flaker4',
+
+    'H2COMPZH': 'Bank_compressor_status_ZH',
+    'H2COMPZI': 'Bank_compressor_status_ZI',
+    'H2COMPZJ': 'Bank_compressor_status_ZJ',
+    'H2COMPG': 'Bank_compressor_status_G',
+    'H2COMPK': 'Bank_compressor_status_K',
+    'H2COMPL': 'Bank_compressor_status_L',
+    'H2COMPM': 'Bank_compressor_status_M',
+    'H2COMPN': 'Bank_compressor_status_N',
+    'H2COMPO': 'Bank_compressor_status_O',
+    'H2COMPP': 'Bank_compressor_status_P',
 }
+## holder specifications
+# 1500 m3 volume of holder volume
+# 150 mmggc //
+# 30deg
