@@ -8,7 +8,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 # CONSTRAINT_DB_PATH = os.path.join(DATA_DIR, "constraints_db.json")
 AUDIT_LOG_PATH = os.path.join(DATA_DIR, "audit_log.csv")
-DB_PATH = "hydrogen_allocation_table.db"
+DB_PATH = "hydrogen_allocation_tool.db"
 TABLE_NAME = "audit_log"
 # --- Constants ---
 
@@ -134,8 +134,6 @@ allocation_to_margin_category = {
     'vent': 'Vent'
 }
 
-# email_list = ["Anshul_Agarwal@mckinsey.com", "Nishu_Singh@mckinsey.com",]
-#               #"pankajminare@dcmshriram.com", "rksahu@dcmshriram.com"]
 
 def get_constraints():
     ROLE_CONSTRAINTS = {

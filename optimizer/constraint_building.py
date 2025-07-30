@@ -20,7 +20,7 @@ def fix_bank_constraints(dcs_constraints, prices, constraints, final_constraints
 
 def fix_h2o2_constraints(dcs_constraints, constraints, final_constraints):
     # STEP 1: Getting consumption norm
-    h2_consumption_norm = dcs_constraints['h2o2_h2_flow'] / dcs_constraints['h2o2_production']
+    h2o2_consumption_norm = dcs_constraints['h2o2_h2_flow'] / dcs_constraints['h2o2_production']
 
     # STEP 2: Setting default values for stable conditions
     final_constraints['h2o2']['min'] = dcs_constraints['h2o2_h2_flow']
@@ -34,22 +34,22 @@ def fix_h2o2_constraints(dcs_constraints, constraints, final_constraints):
             if dcs_constraints['h2o2_h2_flow'] <= 2400:
                 final_constraints['h2o2']['max'] = min(2400,
                                                        (constraints['Marketing']['Demand - H2O2 (TPD)']['max'] / 24) *
-                                                       h2_consumption_norm)
+                                                       h2o2_consumption_norm)
             elif dcs_constraints['h2o2_h2_flow'] < 3000:
                 final_constraints['h2o2']['max'] = dcs_constraints['h2o2_h2_flow']
             else:
                 final_constraints['h2o2']['max'] = min(
                     dcs_constraints['h2o2_h2_flow'] + (200 * dcs_constraints['pipeline_disruption_hrs']),
-                    (constraints['H2O2 Plant']['H2O2 Production Capacity (TPD)']['max'] / 24) * h2_consumption_norm,
-                    (constraints['Marketing']['Demand - H2O2 (TPD)']['max'] / 24) * h2_consumption_norm
+                    (constraints['H2O2 Plant']['H2O2 Production Capacity (TPD)']['max'] / 24) * h2o2_consumption_norm,
+                    (constraints['Marketing']['Demand - H2O2 (TPD)']['max'] / 24) * h2o2_consumption_norm
                 )
 
         else:
             final_constraints['h2o2']['min'] = dcs_constraints['h2o2_h2_flow']
             final_constraints['h2o2']['max'] = min(
                 dcs_constraints['h2o2_h2_flow'] + (200 * dcs_constraints['pipeline_disruption_hrs']),
-                (constraints['H2O2 Plant']['H2O2 Production Capacity (TPD)']['max'] / 24) * h2_consumption_norm,
-                (constraints['Marketing']['Demand - H2O2 (TPD)']['max'] / 24) * h2_consumption_norm
+                (constraints['H2O2 Plant']['H2O2 Production Capacity (TPD)']['max'] / 24) * h2o2_consumption_norm,
+                (constraints['Marketing']['Demand - H2O2 (TPD)']['max'] / 24) * h2o2_consumption_norm
             )
 
     # STEP 4: Handling edge cases when H2O2 is shutdown or ramping down

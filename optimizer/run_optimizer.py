@@ -141,7 +141,7 @@ def generate_hydrogen_recommendations(dcs_constraints, current_flow):
     st.session_state.current_flow = current_flow
     st.session_state.user_input_constraints = all_latest_constraints
 
-    solution = solve_h2_optimizer(duration, final_constraints, prices, all_latest_constraints, dcs_constraints)
+    solution = solve_h2_optimizer(duration, final_constraints, prices, current_flow, dcs_constraints)
 
     allocation_details = HYDROGEN_ALLOCATION_DATA
 

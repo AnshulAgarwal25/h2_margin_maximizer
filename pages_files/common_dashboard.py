@@ -3,7 +3,7 @@ import streamlit as st
 import copy
 from database import save_allocation_data, load_all_allocations
 from optimizer.run_optimizer import trigger_optimizer_if_needed
-from utils.downloader import downloader_allocation, downloader_audit
+from utils.downloader import downloader_allocation, downloader_audit, get_daily_report, get_adherence_report, fetch_data
 
 
 # @st.dialog("New Recommendation Available")
@@ -208,6 +208,8 @@ def common_dashboard_page():
 
     downloader_allocation()
     downloader_audit()
+    get_daily_report()
+    get_adherence_report()
 
     st.button("Optimizer - Current Values",
               on_click=lambda: st.session_state.update(current_page="optimizer_backend_values", selected_role=None))

@@ -61,7 +61,8 @@ def populate_latest_dcs_constraints():
                       data['1350TPD_HCL_FURNACE_3'].values[0] + data['1350TPD_HCL_FURNACE_4'].values[0] +
                       data['850TPD_HCL_FURNACE_A'].values[0] + data['850TPD_HCL_FURNACE_B'].values[0]) / 24
 
-    h2o2_production = data['H2O2_H2O2_current_TPH'].values[0] / 1000  # original data in KG/H
+    h2o2_production = data['H2O2_H2O2_current_TPH'].values[
+                          0] / 2000  # original data in KG/H # original data in 50% conc
     flaker1_load = data['Flaker_450tpd_current_load_TPH'].values[0] / 24  # original data in TPD
     flaker2_load = data['Flaker_600tpd_current_load_TPH'].values[0] / 24  # original data in TPD
     flaker3_load = data['Flaker_850tpd_current_load_TPH_1'].values[0] / 24  # original data in TPD

@@ -1,18 +1,18 @@
 import datetime
 import json
 import sqlite3
-
+from params import *
 import pandas as pd
 import pytz
 
 # --- Database Configuration ---
-DB_FILE = 'hydrogen_allocation_tool.db'  # SQLite database file
+# DB_PATH = 'hydrogen_allocation_tool.db'  # SQLite database file
 
 
 # --- Utility for database connection ---
 def get_db_connection():
     """Establishes and returns a database connection."""
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row  # Allows accessing columns by name
     return conn
 

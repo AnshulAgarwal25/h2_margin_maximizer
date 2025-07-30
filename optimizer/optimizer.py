@@ -67,6 +67,15 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
 
     model.total_h2_constraint = Constraint(rule=total_h2_constraint_rule)
 
+    # Ensure bank is allocated in multiples of 440
+    if 'bank' in dummy_constraints:
+        model.bank_units = Var(domain=NonNegativeIntegers)
+
+        def bank_allocation_multiple_rule(model):
+            return model.h2_amount['bank'] == 440 * model.bank_units
+
+        model.bank_allocation_multiple = Constraint(rule=bank_allocation_multiple_rule)
+
     def min_h2_allocation_rule(model, p):
         return model.h2_amount[p] >= model.min_h2_limit[p] * model.allocate[p]
 
@@ -93,6 +102,7 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
 
     # --- 5. Special Disjunctive Constraint for flaker-3 and flaker-4 ---
     BIG_M = 10_000
+    offset = 400 * (220 / 67)
 
     model.flaker_range_mode = Var(['flaker-3'], domain=Binary)
 
@@ -101,21 +111,28 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
     model.flaker_exact_max_upper = ConstraintList()
 
     for p in ['flaker-3']:
-        min_val = dummy_constraints[p]['min']
         max_val = dummy_constraints[p]['max']
 
-        # If range_mode = 0 → h2_amount ≤ max - (400*(220/67))
+        # Range mode (0): h2_amount ≤ max - offset (or 0 if max < offset)
+        capped_upper = max(0, max_val - offset)
         model.flaker_restricted_upper.add(
-            model.h2_amount[p] <= max((max_val - (400 * (220 / 67))), 0) + BIG_M * model.flaker_range_mode[p]
+            model.h2_amount[p] <= capped_upper + (BIG_M * model.flaker_range_mode[p])
         )
 
-        # If range_mode = 1 → h2_amount = max (enforced via lower and upper bounds)
+        # If range_mode = 0: x >= 0 (already ensured by NonNegativeReals domain)
+
+        # Max mode (1): h2_amount == max_val
         model.flaker_exact_max_lower.add(
             model.h2_amount[p] >= max_val - BIG_M * (1 - model.flaker_range_mode[p])
         )
         model.flaker_exact_max_upper.add(
             model.h2_amount[p] <= max_val + BIG_M * (1 - model.flaker_range_mode[p])
         )
+
+        if max_val == 0:
+            @model.Constraint()
+            def flaker_mode_fixed(m):
+                return m.flaker_range_mode[p] == 0
 
     # # --- 6. Dual variables for sensitivity analysis (optional) ---
     # model.dual = Suffix(direction=Suffix.IMPORT)
@@ -149,7 +166,7 @@ def flaker_mismatch_handling(p, allocation_amount, dcs_constraints):
 
 
 def solve_h2_optimizer(duration, final_constraints, prices,
-                       entry_constraints,
+                       current_flow,
                        dcs_constraints=dcs_constraints_dummy):
     """
     Builds and solves the H2 allocation optimization model.
@@ -158,7 +175,7 @@ def solve_h2_optimizer(duration, final_constraints, prices,
         duration (int): The duration of days.
         final_constraints (dict): Final min and max for allocation areas
         prices (dict): Contribution margin for all allocation areas
-        entry_constraints (dict): entry constraints loaded from last entry
+        current_flow (dict): current flows
         dcs_constraints (dict): constraints from DCS
 
     Returns:
@@ -166,11 +183,18 @@ def solve_h2_optimizer(duration, final_constraints, prices,
               allocated amounts, and allocation decisions) or an error message.
     """
     total_h2_generated = round((dcs_constraints['caustic_production'] *
-                                dcs_constraints['caustic_production_norm']), 2) + 0.52  # adjustment factor - fix later
+                                dcs_constraints['caustic_production_norm']), 2)
+    print(f"H2 Generated as per load and consumption norm: {total_h2_generated}")
 
-    if total_h2_generated < dcs_constraints['total_h2_flow']:
-        total_h2_generated = round(dcs_constraints['total_h2_flow'], 2)
+    total_flow_excluding_vent = sum(
+        value for key, value in current_flow.items() if key not in ["vent", "ech_flow"]
+    )
 
+    print(f"H2 Consumed as per current flow: {total_flow_excluding_vent}")
+    if total_h2_generated < total_flow_excluding_vent:
+        total_h2_generated = total_flow_excluding_vent
+
+    # total_h2_generated = max(total_h2_generated, dcs_constraints['caustic_production'] * 280)
     model = build_h2_optimizer(total_h2_generated, duration, final_constraints, prices)
 
     # Initialize the CBC solver. Ensure 'cbc' is installed and accessible in your system's PATH.
