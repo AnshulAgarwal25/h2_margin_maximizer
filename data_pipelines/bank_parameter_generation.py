@@ -1,13 +1,13 @@
-def check_bank_filling_status(data):
-    bank_filling_status = False
-
-    for i in range(1, 4):
-        tag = f'H2_Bank_Pressure_Tag_{i}'
-        # checking if current bank pressure is the same as the value 3 mins before
-        if data[tag].iloc[3] != data[tag].iloc[0]:
-            bank_filling_status = True
-
-    return bank_filling_status
+# def check_bank_filling_status(data):
+#     bank_filling_status = False
+#
+#     for i in range(1, 4):
+#         tag = f'H2_Bank_Pressure_Tag_{i}'
+#         # checking if current bank pressure is the same as the value 3 mins before
+#         if data[tag].iloc[3] != data[tag].iloc[0]:
+#             bank_filling_status = True
+#
+#     return bank_filling_status
 
 
 def get_bank_data(data):

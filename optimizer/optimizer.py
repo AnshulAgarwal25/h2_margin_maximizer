@@ -63,7 +63,7 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
 
     # --- 4. Constraints ---
     def total_h2_constraint_rule(model):
-        return sum(model.h2_amount[p] for p in model.ALLOCATION_POINTS) == total_h2_generated
+        return sum(model.h2_amount[p] for p in model.ALLOCATION_POINTS) <= total_h2_generated
 
     model.total_h2_constraint = Constraint(rule=total_h2_constraint_rule)
 
@@ -106,7 +106,7 @@ def build_h2_optimizer(total_h2_generated, duration, final_constraints, prices):
 
         # If range_mode = 0 → h2_amount ≤ max - (400*(220/67))
         model.flaker_restricted_upper.add(
-            model.h2_amount[p] <= (max_val - (400 * (220 / 67))) + BIG_M * model.flaker_range_mode[p]
+            model.h2_amount[p] <= max((max_val - (400 * (220 / 67))), 0) + BIG_M * model.flaker_range_mode[p]
         )
 
         # If range_mode = 1 → h2_amount = max (enforced via lower and upper bounds)

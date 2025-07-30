@@ -1,6 +1,6 @@
 import pandas as pd
 import streamlit as st
-
+import copy
 from database import save_allocation_data, load_all_allocations
 from optimizer.run_optimizer import trigger_optimizer_if_needed
 from utils.downloader import downloader_allocation, downloader_audit
@@ -13,8 +13,22 @@ from utils.downloader import downloader_allocation, downloader_audit
 #     # load_message(df, total_df, total_value_df)
 #     st.write("Optimizer ran. New Recommendation Available!")
 
+def update_original_areas(area, new_status=None, new_comment=None):
+    if area == "Flaker - 3 and 4":
+        for orig_area in ["Flaker - 3", "Flaker - 4"]:
+            if new_status is not None:
+                st.session_state.dashboard_data[orig_area]["status"] = new_status
+            if new_comment is not None:
+                st.session_state.dashboard_data[orig_area]["comment"] = new_comment
+    else:
+        if new_status is not None:
+            st.session_state.dashboard_data[area]["status"] = new_status
+        if new_comment is not None:
+            st.session_state.dashboard_data[area]["comment"] = new_comment
+
 
 def modify_allocation_display(dashboard_data):
+    dashboard_data = copy.deepcopy(dashboard_data)
     if "Flaker - 3" in dashboard_data and "Flaker - 4" in dashboard_data:
         merged_area = "Flaker - 3 and 4"
         flaker_3 = dashboard_data["Flaker - 3"]
@@ -167,7 +181,8 @@ def common_dashboard_page():
                 new_status = "pending"
 
             if new_status != current_status:
-                st.session_state.dashboard_data[area]["status"] = new_status
+                # st.session_state.dashboard_data[area]["status"] = new_status
+                update_original_areas(area, new_status=new_status)
                 save_allocation_data(st.session_state.dashboard_data)
                 st.success(f"Status for {area} changed to {new_status}!")
 
@@ -175,7 +190,8 @@ def common_dashboard_page():
             current_comment = data["comment"]
             new_comment = st.text_input(f"Comments for {area}", value=current_comment, key=f"comment_{area}")
             if new_comment != current_comment:
-                st.session_state.dashboard_data[area]["comment"] = new_comment
+                # st.session_state.dashboard_data[area]["comment"] = new_comment
+                update_original_areas(area, new_comment=new_comment)
                 save_allocation_data(st.session_state.dashboard_data)
                 st.success(f"Comment for {area} updated!")
 

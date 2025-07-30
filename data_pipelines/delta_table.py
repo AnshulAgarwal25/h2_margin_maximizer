@@ -4,8 +4,7 @@ import streamlit as st
 import numpy as np
 import pyarrow.compute as pc
 from deltalake import DeltaTable
-from data_pipelines.bank_parameter_generation import check_bank_filling_status, get_bank_data, \
-    get_bank_compressors_data, vent_check
+from data_pipelines.bank_parameter_generation import get_bank_data, get_bank_compressors_data, vent_check
 from database import save_norm_value, get_latest_norm_value
 
 from parameters.constants import *
@@ -39,7 +38,6 @@ def populate_latest_dcs_constraints():
     print("DCS Data Fetched")
     st.session_state.dcs_raw_data = data
 
-    bank_filling_status = check_bank_filling_status(data)
     data = data.iloc[:1]
 
     caustic_production = (data['Caustic_Caustic Production_332tpd_TPH'].values[0] +
@@ -57,8 +55,6 @@ def populate_latest_dcs_constraints():
     header_pressure = data['Hydrogen_Header_pressure_current_kgf_per_cm2'].values[0]
 
     bank_available_quantity, number_of_banks_available = get_bank_data(data)
-    # checking if bank_in_filling_mode or not
-    bank_in_filling = int(bank_filling_status)
 
     # original data in TPD
     hcl_production = (data['1350TPD_HCL_FURNACE_1'].values[0] + data['1350TPD_HCL_FURNACE_2'].values[0] +
@@ -94,6 +90,7 @@ def populate_latest_dcs_constraints():
     venting_check = vent_check(data)
 
     total_bank_flow = get_bank_compressors_data(data)
+    bank_in_filling = 1 if total_bank_flow > 0 else 0
 
     dcs_constraints = {
         "332tpd_caustic": data['Caustic_Caustic Production_332tpd_TPH'].values[0],
